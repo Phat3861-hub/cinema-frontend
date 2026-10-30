@@ -1,22 +1,23 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Suspense } from "react";
 import { ROUTES } from "@/constants/routes";
+import { AuthFooterLink } from "@/features/auth/components/auth-footer-link";
+import { AuthHeading } from "@/features/auth/components/auth-heading";
+import { LoginForm } from "@/features/auth/components/login-form";
+import { firstParam, safeNextPath } from "@/features/auth/redirect";
 
 export const metadata: Metadata = { title: "Đăng nhập" };
 
-export default function LoginPage() {
+export default function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <>
-      <h1 className="text-xl font-semibold">Đăng nhập</h1>
-      <p className="mt-2 text-sm text-zinc-500">
-        Form email / mật khẩu và đăng nhập Google (AUTH-02, AUTH-03).
-      </p>
-      <p className="mt-6 text-sm">
-        Chưa có tài khoản?{" "}
-        <Link href={ROUTES.register} className="text-red-600 hover:underline">
-          Đăng ký
-        </Link>
-      </p>
+      <AuthHeading title="Đăng nhập" />
+      <Suspense fallback={<LoginForm />}>
+        {searchParams.then((query) => (
+          <LoginForm next={safeNextPath(firstParam(query.next))} />
+        ))}
+      </Suspense>
+      <AuthFooterLink text="Chưa có tài khoản?" href={ROUTES.register} label="Đăng ký" />
     </>
   );
 }

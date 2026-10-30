@@ -1,26 +1,51 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Design tokens from the Ticketor Figma file – see docs/ui-design.md §2. Use the classes, never raw hex. */
+@theme {
+  --color-*: initial;
+
+  --color-primary: #fcfc65;
+  --color-primary-100: #fafae8;
+  --color-primary-900: #3a3a04;
+  --color-secondary-600: #74cfcf;
+
+  --color-black: #010108;
+  --color-white: #ffffff;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --color-neutral-50: #f1f1f3;
+  --color-neutral-100: #e0e0e4;
+  --color-neutral-200: #bcbcc6;
+  --color-neutral-300: #9797aa;
+  --color-neutral-400: #7c7c8d;
+  --color-neutral-500: #565669;
+  --color-neutral: #565669;
+  --color-neutral-600: #454555;
+  --color-neutral-700: #353541;
+  --color-neutral-800: #25252c;
+  --color-neutral-850: #1a1a1f;
+
+  /* Not defined by Ticketor; both reach 4.5:1 on `black`. */
+  --color-danger: #ff6b6b;
+  --color-success: #4ade80;
+
+  /* Typography styles (size / line-height / weight). */
+  --text-h4: 2rem;
+  --text-h4--line-height: 1.4;
+  --text-h4--font-weight: 700;
+  --text-h6: 1.5rem;
+  --text-h6--line-height: 1.4;
+  --text-h6--font-weight: 700;
+  --text-h8: 1rem;
+  --text-h8--line-height: 1.5;
+  --text-h8--font-weight: 700;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  @apply bg-black text-white;
 }
