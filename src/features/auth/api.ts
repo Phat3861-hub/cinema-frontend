@@ -1,6 +1,7 @@
 import { apiFetch } from "@/lib/api-client";
 import type {
   AuthSession,
+  ChangePasswordRequest,
   CurrentUser,
   LoginRequest,
   RegisteredUser,
@@ -20,4 +21,8 @@ export const authApi = {
     apiFetch<void>("/auth/reset-password", { method: "POST", body }),
   me: () => apiFetch<CurrentUser>("/auth/me"),
   logout: () => apiFetch<void>("/auth/logout", { method: "POST" }),
+  logoutAll: () => apiFetch<void>("/auth/logout-all", { method: "POST" }),
+  /** Revokes the other sessions and issues new cookies for this device. */
+  changePassword: (body: ChangePasswordRequest) =>
+    apiFetch<AuthSession>("/auth/change-password", { method: "POST", body }),
 };

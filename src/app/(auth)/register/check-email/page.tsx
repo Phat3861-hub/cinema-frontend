@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Xác thực email" };
 export default function CheckEmailPage({ searchParams }: PageProps<"/register/check-email">) {
   return (
     <>
-      <AuthHeading title="Kiểm tra email của bạn" />
+      <AuthHeading title="auth.checkEmail.title" />
       <Suspense>
         {searchParams.then((query) => (
           <CheckEmail email={firstParam(query.email)} />

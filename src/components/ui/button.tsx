@@ -1,21 +1,23 @@
 import type { ComponentProps } from "react";
 import { Spinner } from "@/components/ui/spinner";
 
-type Variant = "primary" | "outline" | "ghost";
-type Size = "md" | "lg";
+type Variant = "primary" | "outline" | "ghost" | "danger";
+type Size = "sm" | "md" | "lg";
 
 const BASE =
   "inline-flex items-center justify-center gap-2 rounded font-medium transition-colors duration-150 " +
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary " +
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent " +
   "disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer";
 
 const VARIANTS: Record<Variant, string> = {
   primary: "bg-primary text-black hover:bg-primary/85",
-  outline: "border border-neutral-600 text-white hover:border-neutral-400 hover:bg-neutral-850",
-  ghost: "text-neutral-200 hover:bg-neutral-850 hover:text-white",
+  outline: "border border-line-strong text-fg hover:border-fg-subtle hover:bg-surface-2",
+  ghost: "text-fg-2 hover:bg-surface-2 hover:text-fg",
+  danger: "bg-danger text-white hover:bg-danger/85 dark:text-black",
 };
 
 const SIZES: Record<Size, string> = {
+  sm: "h-8 px-3 text-xs",
   md: "h-10 px-4 text-sm",
   lg: "h-12 px-6 text-base",
 };

@@ -14,8 +14,10 @@ import {
   hasErrors,
   validateConfirmPassword,
   validateNewPassword,
+  fieldMessage,
   type FieldErrors,
 } from "@/features/auth/validation";
+import { useT } from "@/i18n";
 import { errorCodeOf, getErrorMessage, getFieldErrors } from "@/lib/error-messages";
 
 type Field = "newPassword" | "confirmPassword";
@@ -31,11 +33,12 @@ const LINK_ERRORS = new Set(["TOKEN_INVALID", "TOKEN_EXPIRED"]);
 
 /** Step 3–4 of Ticketor "Forgot password", opened from the email link `/reset-password?token=`. */
 export function ResetPasswordForm({ token }: { token?: string }) {
+  const t = useT();
   const session = useSession();
   const [values, setValues] = useState<Record<Field, string>>({ newPassword: "", confirmPassword: "" });
   const [errors, setErrors] = useState<FieldErrors<Field>>({});
-  const [formError, setFormError] = useState<{ code?: string; message: string } | null>(
-    token ? null : { code: "TOKEN_INVALID", message: "Link đặt lại mật khẩu không hợp lệ." },
+  const [formError, setFormError] = useState<{ code?: string; error?: unknown } | null>(
+    token ? null : { code: "TOKEN_INVALID" },
   );
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
@@ -66,7 +69,7 @@ export function ResetPasswordForm({ token }: { token?: string }) {
       setDone(true);
     } catch (error) {
       setErrors(getFieldErrors(error));
-      setFormError({ code: errorCodeOf(error), message: getErrorMessage(error) });
+      setFormError({ code: errorCodeOf(error), error });
     } finally {
       setSubmitting(false);
     }
@@ -76,11 +79,11 @@ export function ResetPasswordForm({ token }: { token?: string }) {
     return (
       <div className="flex flex-col items-center gap-6 text-center">
         <CircleCheck aria-hidden className="size-16 text-success" strokeWidth={1.5} />
-        <p role="status" className="text-sm font-medium text-neutral-200">
-          Đặt lại mật khẩu thành công. Mọi thiết bị đã được đăng xuất, vui lòng đăng nhập lại bằng mật khẩu mới.
+        <p role="status" className="text-sm font-medium text-fg-2">
+          {t.auth.reset.done}
         </p>
         <Link href={ROUTES.login} className={buttonClasses({ fullWidth: true })}>
-          Đăng nhập
+          {t.auth.login.submit}
         </Link>
       </div>
     );
@@ -92,43 +95,43 @@ export function ResetPasswordForm({ token }: { token?: string }) {
     <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-6">
       {formError && (
         <Alert tone="error">
-          {formError.message}
+          {formError.error === undefined ? t.auth.reset.invalidLink : getErrorMessage(formError.error, t)}
           {linkBroken && (
             <>
               {" "}
               <Link
                 href={ROUTES.forgotPassword}
-                className="font-bold text-primary underline-offset-2 hover:underline"
+                className="font-bold text-accent underline-offset-2 hover:underline"
               >
-                Yêu cầu link mới
+                {t.auth.reset.requestNew}
               </Link>
             </>
           )}
         </Alert>
       )}
       <PasswordField
-        label="Mật khẩu mới"
+        label={t.auth.newPassword}
         name="newPassword"
         autoComplete="new-password"
-        placeholder="Tạo mật khẩu mới"
+        placeholder={t.auth.newPasswordPlaceholder}
         value={values.newPassword}
         onChange={(e) => update("newPassword", e.target.value)}
-        error={errors.newPassword}
+        error={fieldMessage(t, errors.newPassword)}
         hint={<PasswordRules password={values.newPassword} />}
         disabled={!token}
       />
       <PasswordField
-        label="Nhập lại mật khẩu mới"
+        label={t.auth.confirmNewPassword}
         name="confirmPassword"
         autoComplete="new-password"
-        placeholder="Nhập lại mật khẩu mới"
+        placeholder={t.auth.confirmNewPassword}
         value={values.confirmPassword}
         onChange={(e) => update("confirmPassword", e.target.value)}
-        error={errors.confirmPassword}
+        error={fieldMessage(t, errors.confirmPassword)}
         disabled={!token}
       />
       <Button type="submit" fullWidth loading={submitting} disabled={!token}>
-        Đặt lại mật khẩu
+        {t.auth.reset.submit}
       </Button>
     </form>
   );

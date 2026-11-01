@@ -9,12 +9,9 @@ export const metadata: Metadata = { title: "Quên mật khẩu" };
 export default function ForgotPasswordPage() {
   return (
     <>
-      <AuthHeading
-        title="Quên mật khẩu"
-        description="Nhập email đã đăng ký, chúng tôi sẽ gửi link để bạn đặt lại mật khẩu."
-      />
+      <AuthHeading title="auth.forgot.title" description="auth.forgot.subtitle" />
       <ForgotPasswordForm />
-      <AuthFooterLink text="Đã nhớ mật khẩu?" href={ROUTES.login} label="Đăng nhập" />
+      <AuthFooterLink text="auth.forgot.remembered" href={ROUTES.login} label="auth.login.submit" />
     </>
   );
 }

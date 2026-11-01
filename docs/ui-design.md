@@ -72,9 +72,11 @@ card bo `8px`, navbar dạng "viên thuốc" bo `8px`; container `1232px` (lề 
 
 ## 3. Nguyên tắc chung
 
-- **Khách hàng: chỉ dark theme** (nền `black`, đúng Ticketor). **Admin: light mặc định + dark mode** (`dark:`), xem §5.1.
+- **Mọi trang có light + dark theme** (mặc định dark, cookie `theme`, nút chuyển ở header / topbar admin). Màu dùng token ngữ nghĩa
+  trong `globals.css` (`bg-page`, `bg-surface`, `text-fg`, `text-accent`…), đổi theo class `.dark` trên `<html>` (quyết định 2026-10-31).
+- **Song ngữ vi / en** (mặc định vi, cookie `locale`), text lấy từ `src/i18n/messages/*` – không viết cứng trong component.
 - Tên thương hiệu **PNT Cinema** (thay logo "Ticketor"; admin: "PNT Admin").
-- Text tiếng Việt; tiền **VND** `90.000 ₫` (`Intl.NumberFormat('vi-VN')`, helper trong `lib/format.ts`), ngày `dd/MM/yyyy`,
+- Tiền **VND** `90.000 ₫` (`Intl.NumberFormat('vi-VN')`, helper trong `lib/format.ts`), ngày `dd/MM/yyyy`,
   giờ 24h, khoảng cách **km** (Ticketor dùng Mi / $ / 12h → đổi hết).
 - Backend trả tiếng Anh → dịch theo mã: lỗi theo `code`, thể loại theo `slug`, độ tuổi `P K T13 T16 T18`, trạng thái phim
   `NOW_SHOWING / COMING_SOON / ENDED`, loại phòng `2D 3D IMAX 4DX`, role / permission theo `code`.

@@ -1,12 +1,8 @@
 import type { Metadata } from "next";
-import { PagePlaceholder } from "@/components/layout/page-placeholder";
+import { CinemasScreen } from "@/features/cinema/components/cinemas-screen";
 
-export const metadata: Metadata = { title: "Rạp" };
+export const metadata: Metadata = { title: "Rạp chiếu" };
 
 export default function CinemasPage() {
-  return (
-    <PagePlaceholder title="Hệ thống rạp">
-      Danh sách rạp theo thành phố, rạp gần bạn (CIN-01).
-    </PagePlaceholder>
-  );
+  return <CinemasScreen />;
 }

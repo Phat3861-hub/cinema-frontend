@@ -11,13 +11,13 @@ export const metadata: Metadata = { title: "Đăng nhập" };
 export default function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <>
-      <AuthHeading title="Đăng nhập" />
+      <AuthHeading title="auth.login.title" description="auth.login.subtitle" />
       <Suspense fallback={<LoginForm />}>
         {searchParams.then((query) => (
           <LoginForm next={safeNextPath(firstParam(query.next))} />
         ))}
       </Suspense>
-      <AuthFooterLink text="Chưa có tài khoản?" href={ROUTES.register} label="Đăng ký" />
+      <AuthFooterLink text="auth.login.noAccount" href={ROUTES.register} label="auth.register.submit" />
     </>
   );
 }

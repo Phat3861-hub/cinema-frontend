@@ -9,9 +9,9 @@ export const metadata: Metadata = { title: "Đăng ký" };
 export default function RegisterPage() {
   return (
     <>
-      <AuthHeading title="Tạo tài khoản" description="Đặt vé nhanh, chọn ghế realtime, nhận vé QR qua email." />
+      <AuthHeading title="auth.register.title" description="auth.register.subtitle" />
       <RegisterForm />
-      <AuthFooterLink text="Đã có tài khoản?" href={ROUTES.login} label="Đăng nhập" />
+      <AuthFooterLink text="auth.register.hasAccount" href={ROUTES.login} label="auth.login.submit" />
     </>
   );
 }
