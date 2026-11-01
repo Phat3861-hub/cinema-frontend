@@ -120,7 +120,7 @@ export const ADMIN_MENU: AdminMenuGroup[] = [
         permissions: ["VOUCHER_MANAGE_GLOBAL", "VOUCHER_MANAGE_CINEMA"],
         soon: true,
       },
-      { key: "products", href: ROUTES.admin.products, icon: Popcorn, permissions: ["PRODUCT_MANAGE"], soon: true },
+      { key: "products", href: ROUTES.admin.products, icon: Popcorn, permissions: ["PRODUCT_MANAGE"] },
       {
         key: "reports",
         href: ROUTES.admin.reports,

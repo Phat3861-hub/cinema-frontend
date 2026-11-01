@@ -26,6 +26,7 @@ import {
   validateNewPassword,
   type FieldErrors,
 } from "@/features/auth/validation";
+import { MyBookings } from "@/features/booking/components/my-bookings";
 import { useT } from "@/i18n";
 import { errorCodeOf, getErrorMessage } from "@/lib/error-messages";
 
@@ -44,7 +45,7 @@ export function AccountScreen({ section }: { section: "account" | "tickets" }) {
   return (
     <div className="mx-auto grid w-full max-w-[1232px] items-start gap-6 px-4 py-8 lg:grid-cols-[260px_1fr]">
       <AccountNav user={user} section={section} />
-      {section === "account" ? <AccountDetails user={user} /> : <MyTickets />}
+      {section === "account" ? <AccountDetails user={user} /> : <MyBookings />}
     </div>
   );
 }
@@ -277,25 +278,6 @@ function LogoutEverywhere() {
         description={t.account.logoutAllHint}
         confirmLabel={t.account.logoutAllButton}
       />
-    </section>
-  );
-}
-
-function MyTickets() {
-  const t = useT();
-  return (
-    <section className="rounded-2xl border border-line bg-surface p-6" aria-labelledby="tickets-title">
-      <h1 id="tickets-title" className="text-h6 mb-2">
-        {t.nav.myTickets}
-      </h1>
-      <div className="flex flex-col items-center gap-3 py-12 text-center">
-        <Ticket aria-hidden className="size-12 text-fg-muted" strokeWidth={1.5} />
-        <p className="text-h8">{t.account.noTickets}</p>
-        <p className="max-w-md text-sm font-medium text-fg-muted">{t.account.ticketsSoon}</p>
-        <Link href={ROUTES.movies} className="mt-2 inline-flex h-10 items-center rounded bg-primary px-4 text-sm font-medium text-black hover:bg-primary/85">
-          {t.home.browseMovies}
-        </Link>
-      </div>
     </section>
   );
 }

@@ -29,7 +29,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: PREFERENCES_SCRIPT }} />
       </head>
-      <body className="flex min-h-full flex-col font-sans">
+      {/* Browser extensions (e.g. ColorZilla `cz-shortcut-listen`) add attributes to <body> before hydration. */}
+      <body className="flex min-h-full flex-col font-sans" suppressHydrationWarning>
         <SessionProvider>
           <ToastProvider>{children}</ToastProvider>
         </SessionProvider>
