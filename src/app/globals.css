@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* `dark:` follows the `.dark` class set on <html> by the theme script (cookie `theme`), not the OS setting. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Design tokens from the Ticketor Figma file – see docs/ui-design.md §2. Use the classes, never raw hex. */
 @theme {
   --color-*: initial;
@@ -26,10 +29,6 @@
   --color-neutral-800: #25252c;
   --color-neutral-850: #1a1a1f;
 
-  /* Not defined by Ticketor; both reach 4.5:1 on `black`. */
-  --color-danger: #ff6b6b;
-  --color-success: #4ade80;
-
   /* Typography styles (size / line-height / weight). */
   --text-h4: 2rem;
   --text-h4--line-height: 1.4;
@@ -42,10 +41,82 @@
   --text-h8--font-weight: 700;
 }
 
+/*
+ * Semantic colours that switch with the theme. Components use these (`bg-page`, `bg-surface`, `text-fg`,
+ * `border-line`…) so one class works in both themes. Dark = Ticketor; light = same palette inverted.
+ */
+:root {
+  --page: #f1f1f3;
+  --surface: #ffffff;
+  --surface-2: #f1f1f3;
+  --surface-3: #e0e0e4;
+  --line: #e0e0e4;
+  --line-strong: #bcbcc6;
+  --fg: #010108;
+  --fg-2: #353541;
+  --fg-muted: #565669;
+  --fg-subtle: #7c7c8d;
+  /* Text accent: never yellow on a light background (docs/ui-design.md §5.1). */
+  --accent: #3a3a04;
+  --danger: #c62828;
+  --success: #15803d;
+  --warning: #b45309;
+  --info: #0e7c7c;
+}
+
+.dark {
+  --page: #010108;
+  --surface: #1a1a1f;
+  --surface-2: #25252c;
+  --surface-3: #353541;
+  --line: #353541;
+  --line-strong: #454555;
+  --fg: #ffffff;
+  --fg-2: #bcbcc6;
+  --fg-muted: #9797aa;
+  --fg-subtle: #7c7c8d;
+  --accent: #fcfc65;
+  /* Not defined by Ticketor; all reach 4.5:1 on `black`. */
+  --danger: #ff6b6b;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --info: #74cfcf;
+}
+
 @theme inline {
   --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg);
+  --color-fg-2: var(--fg-2);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+  --color-accent: var(--accent);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
 }
 
 body {
-  @apply bg-black text-white;
+  @apply bg-page text-fg transition-colors duration-200;
+}
+
+/* Native date / time pickers follow the theme. */
+:root {
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body {
+    transition: none;
+  }
 }

@@ -59,6 +59,12 @@ export interface RegisterRequest {
   phone?: string;
 }
 
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
 export interface ResetPasswordRequest {
   token: string;
   newPassword: string;

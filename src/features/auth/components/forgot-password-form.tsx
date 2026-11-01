@@ -9,14 +9,16 @@ import { ROUTES } from "@/constants/routes";
 import { authApi } from "@/features/auth/api";
 import { EmailSentNotice } from "@/features/auth/components/email-sent-notice";
 import { ResendButton } from "@/features/auth/components/resend-button";
-import { validateEmail } from "@/features/auth/validation";
+import { fieldMessage, validateEmail, type ValidationKey } from "@/features/auth/validation";
+import { useT } from "@/i18n";
 import { getErrorMessage } from "@/lib/error-messages";
 
 /** Step 1–2 of Ticketor "Forgot password": enter email → "check your email". */
 export function ForgotPasswordForm() {
+  const t = useT();
   const [email, setEmail] = useState("");
-  const [error, setError] = useState<string>();
-  const [formError, setFormError] = useState<string | null>(null);
+  const [error, setError] = useState<ValidationKey>();
+  const [formError, setFormError] = useState<unknown>(null);
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -32,7 +34,7 @@ export function ForgotPasswordForm() {
       await authApi.forgotPassword(email.trim());
       setSentTo(email.trim());
     } catch (err) {
-      setFormError(getErrorMessage(err));
+      setFormError(err);
     } finally {
       setSubmitting(false);
     }
@@ -43,12 +45,11 @@ export function ForgotPasswordForm() {
     return (
       <div className="flex flex-col gap-8">
         <EmailSentNotice email={sentTo}>
-          Nếu email này đã đăng ký, chúng tôi đã gửi link đặt lại mật khẩu. Link chỉ dùng được một lần và hết
-          hạn sau 15 phút.
+          {t.auth.forgot.sent}
         </EmailSentNotice>
-        <ResendButton label="Gửi lại link" onResend={() => authApi.forgotPassword(sentTo)} />
+        <ResendButton label={t.auth.forgot.resend} onResend={() => authApi.forgotPassword(sentTo)} />
         <Link href={ROUTES.login} className={buttonClasses({ fullWidth: true })}>
-          Về trang đăng nhập
+          {t.auth.backToLogin}
         </Link>
       </div>
     );
@@ -56,9 +57,9 @@ export function ForgotPasswordForm() {
 
   return (
     <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-6">
-      {formError && <Alert tone="error">{formError}</Alert>}
+      {formError !== null && <Alert tone="error">{getErrorMessage(formError, t)}</Alert>}
       <TextField
-        label="Email"
+        label={t.auth.email}
         name="email"
         type="email"
         inputMode="email"
@@ -69,10 +70,10 @@ export function ForgotPasswordForm() {
           setEmail(e.target.value);
           if (error) setError(validateEmail(e.target.value));
         }}
-        error={error}
+        error={fieldMessage(t, error)}
       />
       <Button type="submit" fullWidth loading={submitting}>
-        Gửi link đặt lại mật khẩu
+        {t.auth.forgot.submit}
       </Button>
     </form>
   );

@@ -9,7 +9,8 @@ import { ROUTES } from "@/constants/routes";
 import { authApi } from "@/features/auth/api";
 import { EmailSentNotice } from "@/features/auth/components/email-sent-notice";
 import { ResendButton } from "@/features/auth/components/resend-button";
-import { validateEmail } from "@/features/auth/validation";
+import { fieldMessage, validateEmail, type ValidationKey } from "@/features/auth/validation";
+import { useT } from "@/i18n";
 import { getErrorMessage } from "@/lib/error-messages";
 
 /**
@@ -17,26 +18,27 @@ import { getErrorMessage } from "@/lib/error-messages";
  * resend; without it (e.g. coming from an expired link) the user types the email to get a new link.
  */
 export function CheckEmail({ email }: { email?: string }) {
+  const t = useT();
   if (!email) return <RequestVerificationLink />;
 
   return (
     <div className="flex flex-col gap-8">
       <EmailSentNotice email={email}>
-        Chúng tôi đã gửi link xác thực tới email trên. Mở email và bấm vào link để kích hoạt tài khoản, sau đó
-        đăng nhập.
+        {t.auth.checkEmail.sent}
       </EmailSentNotice>
-      <ResendButton label="Gửi lại email" onResend={() => authApi.resendVerification(email)} />
+      <ResendButton label={t.auth.checkEmail.resend} onResend={() => authApi.resendVerification(email)} />
       <Link href={ROUTES.login} className={buttonClasses({ fullWidth: true })}>
-        Đến trang đăng nhập
+        {t.auth.checkEmail.toLogin}
       </Link>
     </div>
   );
 }
 
 function RequestVerificationLink() {
+  const t = useT();
   const [email, setEmail] = useState("");
-  const [error, setError] = useState<string>();
-  const [formError, setFormError] = useState<string | null>(null);
+  const [error, setError] = useState<ValidationKey>();
+  const [formError, setFormError] = useState<unknown>(null);
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -54,7 +56,7 @@ function RequestVerificationLink() {
       await authApi.resendVerification(email.trim());
       setSentTo(email.trim());
     } catch (err) {
-      setFormError(getErrorMessage(err));
+      setFormError(err);
     } finally {
       setSubmitting(false);
     }
@@ -62,9 +64,9 @@ function RequestVerificationLink() {
 
   return (
     <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-6">
-      {formError && <Alert tone="error">{formError}</Alert>}
+      {formError !== null && <Alert tone="error">{getErrorMessage(formError, t)}</Alert>}
       <TextField
-        label="Email đã đăng ký"
+        label={t.auth.checkEmail.registeredEmail}
         name="email"
         type="email"
         inputMode="email"
@@ -75,10 +77,10 @@ function RequestVerificationLink() {
           setEmail(e.target.value);
           if (error) setError(validateEmail(e.target.value));
         }}
-        error={error}
+        error={fieldMessage(t, error)}
       />
       <Button type="submit" fullWidth loading={submitting}>
-        Gửi link xác thực
+        {t.auth.checkEmail.submit}
       </Button>
     </form>
   );

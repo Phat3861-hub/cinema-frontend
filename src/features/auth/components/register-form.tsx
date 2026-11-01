@@ -16,8 +16,10 @@ import {
   validateFullName,
   validateNewPassword,
   validatePhone,
+  fieldMessage,
   type FieldErrors,
 } from "@/features/auth/validation";
+import { useT } from "@/i18n";
 import { errorCodeOf, getErrorMessage, getFieldErrors } from "@/lib/error-messages";
 
 type Field = "fullName" | "email" | "phone" | "password" | "confirmPassword";
@@ -35,10 +37,11 @@ function validate(v: Record<Field, string>): FieldErrors<Field> {
 const EMPTY: Record<Field, string> = { fullName: "", email: "", phone: "", password: "", confirmPassword: "" };
 
 export function RegisterForm() {
+  const t = useT();
   const router = useRouter();
   const [values, setValues] = useState(EMPTY);
   const [errors, setErrors] = useState<FieldErrors<Field>>({});
-  const [formError, setFormError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<unknown>(null);
   const [submitting, setSubmitting] = useState(false);
 
   function update(field: Field, value: string) {
@@ -74,11 +77,11 @@ export function RegisterForm() {
       router.push(withQuery(ROUTES.registerCheckEmail, { email }));
     } catch (error) {
       const code = errorCodeOf(error);
-      if (code === "EMAIL_ALREADY_EXISTS") setErrors({ email: getErrorMessage(error) });
-      else if (code === "PHONE_ALREADY_EXISTS") setErrors({ phone: getErrorMessage(error) });
+      if (code === "EMAIL_ALREADY_EXISTS") setErrors({ email: "emailTaken" });
+      else if (code === "PHONE_ALREADY_EXISTS") setErrors({ phone: "phoneTaken" });
       else {
         setErrors(getFieldErrors(error));
-        setFormError(getErrorMessage(error));
+        setFormError(error);
       }
       setSubmitting(false);
     }
@@ -86,19 +89,19 @@ export function RegisterForm() {
 
   return (
     <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-5">
-      {formError && <Alert tone="error">{formError}</Alert>}
+      {formError !== null && <Alert tone="error">{getErrorMessage(formError, t)}</Alert>}
 
       <TextField
-        label="Họ tên"
+        label={t.auth.fullName}
         name="fullName"
         autoComplete="name"
-        placeholder="Nguyễn Văn A"
+        placeholder={t.auth.fullNamePlaceholder}
         value={values.fullName}
         onChange={(e) => update("fullName", e.target.value)}
-        error={errors.fullName}
+        error={fieldMessage(t, errors.fullName)}
       />
       <TextField
-        label="Email"
+        label={t.auth.email}
         name="email"
         type="email"
         inputMode="email"
@@ -106,10 +109,10 @@ export function RegisterForm() {
         placeholder="ten@example.com"
         value={values.email}
         onChange={(e) => update("email", e.target.value)}
-        error={errors.email}
+        error={fieldMessage(t, errors.email)}
       />
       <TextField
-        label="Số điện thoại"
+        label={t.auth.phone}
         optional
         name="phone"
         type="tel"
@@ -118,30 +121,30 @@ export function RegisterForm() {
         placeholder="0912345678"
         value={values.phone}
         onChange={(e) => update("phone", e.target.value)}
-        error={errors.phone}
+        error={fieldMessage(t, errors.phone)}
       />
       <PasswordField
-        label="Mật khẩu"
+        label={t.auth.password}
         name="password"
         autoComplete="new-password"
-        placeholder="Tạo mật khẩu"
+        placeholder={t.auth.newPasswordPlaceholder}
         value={values.password}
         onChange={(e) => update("password", e.target.value)}
-        error={errors.password}
+        error={fieldMessage(t, errors.password)}
         hint={<PasswordRules password={values.password} />}
       />
       <PasswordField
-        label="Nhập lại mật khẩu"
+        label={t.auth.confirmPassword}
         name="confirmPassword"
         autoComplete="new-password"
-        placeholder="Nhập lại mật khẩu"
+        placeholder={t.auth.confirmPassword}
         value={values.confirmPassword}
         onChange={(e) => update("confirmPassword", e.target.value)}
-        error={errors.confirmPassword}
+        error={fieldMessage(t, errors.confirmPassword)}
       />
 
       <Button type="submit" fullWidth loading={submitting} className="mt-1">
-        Đăng ký
+        {t.auth.register.submit}
       </Button>
     </form>
   );

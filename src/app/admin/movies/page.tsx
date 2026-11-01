@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
-import { PagePlaceholder } from "@/components/layout/page-placeholder";
+import { Suspense } from "react";
+import { LoadingState } from "@/components/ui/states";
+import { AdminMoviesScreen } from "@/features/movie/components/admin-movies-screen";
 
 export const metadata: Metadata = { title: "Phim" };
 
 export default function AdminMoviesPage() {
-  return <PagePlaceholder title="Quản lý phim">CRUD phim, thể loại, poster, trailer (MOV-04).</PagePlaceholder>;
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <AdminMoviesScreen />
+    </Suspense>
+  );
 }

@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Xác thực email" };
 export default function VerifyEmailPage({ searchParams }: PageProps<"/verify-email">) {
   return (
     <>
-      <AuthHeading title="Xác thực email" />
+      <AuthHeading title="auth.verify.title" />
       <Suspense fallback={<Spinner className="mx-auto size-10 text-primary" />}>
         {searchParams.then((query) => (
           <VerifyEmail token={firstParam(query.token)} />

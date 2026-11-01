@@ -11,7 +11,14 @@ import { ROUTES, withQuery } from "@/constants/routes";
 import { authApi } from "@/features/auth/api";
 import { useSession } from "@/features/auth/components/session-provider";
 import { afterLoginPath } from "@/features/auth/redirect";
-import { hasErrors, validateEmail, validateLoginPassword, type FieldErrors } from "@/features/auth/validation";
+import {
+  fieldMessage,
+  hasErrors,
+  validateEmail,
+  validateLoginPassword,
+  type FieldErrors,
+} from "@/features/auth/validation";
+import { useT } from "@/i18n";
 import { errorCodeOf, getErrorMessage, getFieldErrors } from "@/lib/error-messages";
 
 type Field = "email" | "password";
@@ -21,11 +28,12 @@ function validate(values: Record<Field, string>): FieldErrors<Field> {
 }
 
 export function LoginForm({ next }: { next?: string }) {
+  const t = useT();
   const router = useRouter();
   const session = useSession();
   const [values, setValues] = useState<Record<Field, string>>({ email: "", password: "" });
   const [errors, setErrors] = useState<FieldErrors<Field>>({});
-  const [formError, setFormError] = useState<{ code?: string; message: string } | null>(null);
+  const [formError, setFormError] = useState<{ code?: string; error: unknown } | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   // Already signed in (e.g. session restored by the refresh cookie): leave the login page.
@@ -56,7 +64,7 @@ export function LoginForm({ next }: { next?: string }) {
       router.replace(afterLoginPath(user, next));
     } catch (error) {
       setErrors(getFieldErrors(error));
-      setFormError({ code: errorCodeOf(error), message: getErrorMessage(error) });
+      setFormError({ code: errorCodeOf(error), error });
       setSubmitting(false);
     }
   }
@@ -65,15 +73,15 @@ export function LoginForm({ next }: { next?: string }) {
     <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-6">
       {formError && (
         <Alert tone="error">
-          {formError.message}
+          {getErrorMessage(formError.error, t)}
           {formError.code === "EMAIL_NOT_VERIFIED" && (
             <>
               {" "}
               <Link
                 href={withQuery(ROUTES.registerCheckEmail, { email: values.email.trim() })}
-                className="font-bold text-primary underline-offset-2 hover:underline"
+                className="font-bold text-accent underline-offset-2 hover:underline"
               >
-                Gửi lại email xác thực
+                {t.auth.login.resendVerification}
               </Link>
             </>
           )}
@@ -81,7 +89,7 @@ export function LoginForm({ next }: { next?: string }) {
       )}
 
       <TextField
-        label="Email"
+        label={t.auth.email}
         name="email"
         type="email"
         inputMode="email"
@@ -89,29 +97,29 @@ export function LoginForm({ next }: { next?: string }) {
         placeholder="ten@example.com"
         value={values.email}
         onChange={(e) => update("email", e.target.value)}
-        error={errors.email}
+        error={fieldMessage(t, errors.email)}
       />
 
       <div className="flex flex-col gap-2">
         <PasswordField
-          label="Mật khẩu"
+          label={t.auth.password}
           name="password"
           autoComplete="current-password"
-          placeholder="Nhập mật khẩu"
+          placeholder={t.auth.passwordPlaceholder}
           value={values.password}
           onChange={(e) => update("password", e.target.value)}
-          error={errors.password}
+          error={fieldMessage(t, errors.password)}
         />
         <Link
           href={ROUTES.forgotPassword}
-          className="self-end rounded text-xs font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-primary"
+          className="self-end rounded text-xs font-medium text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent"
         >
-          Quên mật khẩu?
+          {t.auth.login.forgot}
         </Link>
       </div>
 
       <Button type="submit" fullWidth loading={submitting}>
-        Đăng nhập
+        {t.auth.login.submit}
       </Button>
     </form>
   );

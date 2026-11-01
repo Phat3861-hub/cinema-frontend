@@ -1,0 +1,8 @@
+import type { Metadata } from "next";
+import { AccountScreen } from "@/features/account/components/account-screen";
+
+export const metadata: Metadata = { title: "Tài khoản" };
+
+export default function AccountPage() {
+  return <AccountScreen section="account" />;
+}

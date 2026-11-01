@@ -17,10 +17,24 @@ export class ApiError extends Error {
 /** Client-only code for "backend unreachable" (status 0), not a backend ErrorCode. */
 export const NETWORK_ERROR = "NETWORK_ERROR";
 
+export type QueryValue = string | number | boolean | null | undefined;
+
 type RequestOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
+  /** Search params; empty values are dropped. */
+  query?: Record<string, QueryValue>;
   accessToken?: string;
 };
+
+function toSearch(query: Record<string, QueryValue> | undefined): string {
+  if (!query) return "";
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined && value !== null && value !== "") params.set(key, String(value));
+  }
+  const search = params.toString();
+  return search ? `?${search}` : "";
+}
 
 let refreshInFlight: Promise<boolean> | null = null;
 
@@ -48,10 +62,11 @@ function refreshSession(): Promise<boolean> {
  * In the browser, an expired access token (401 UNAUTHORIZED) is refreshed once and the request retried.
  */
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { body, accessToken, headers, ...init } = options;
+  const { body, query, accessToken, headers, ...init } = options;
+  const url = `${env.apiUrl}${path}${toSearch(query)}`;
 
   const send = () =>
-    fetch(`${env.apiUrl}${path}`, {
+    fetch(url, {
       credentials: "include",
       ...init,
       headers: {

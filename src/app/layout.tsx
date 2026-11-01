@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
+import { ToastProvider } from "@/components/ui/toast";
 import { SessionProvider } from "@/features/auth/components/session-provider";
+import { DEFAULT_LOCALE, DEFAULT_THEME, PREFERENCES_SCRIPT } from "@/lib/preferences";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -18,9 +20,19 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="vi" className={`${manrope.variable} h-full antialiased`}>
+    // The preferences script changes `lang` and the `dark` class before hydration.
+    <html
+      lang={DEFAULT_LOCALE}
+      suppressHydrationWarning
+      className={`${manrope.variable} h-full antialiased ${DEFAULT_THEME === "dark" ? "dark" : ""}`}
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: PREFERENCES_SCRIPT }} />
+      </head>
       <body className="flex min-h-full flex-col font-sans">
-        <SessionProvider>{children}</SessionProvider>
+        <SessionProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </SessionProvider>
       </body>
     </html>
   );
