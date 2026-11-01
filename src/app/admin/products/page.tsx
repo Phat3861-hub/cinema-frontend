@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { PagePlaceholder } from "@/components/layout/page-placeholder";
+import { AdminProductsScreen } from "@/features/booking/components/admin-products-screen";
 
 export const metadata: Metadata = { title: "Bắp nước" };
 
-export default function Page() {
-  return <PagePlaceholder title="admin.menu.products" description="admin.soon.products" />;
+export default function AdminProductsPage() {
+  return <AdminProductsScreen />;
 }
