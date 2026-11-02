@@ -409,6 +409,13 @@ function BookingDetailDialog({ booking, onClose }: { booking: Booking | null; on
             </div>
           )}
 
+          {Number(booking.discountAmount) > 0 && (
+            <p className="flex justify-between gap-4 font-medium text-success">
+              <span>{booking.voucher ? t.promotion.discountLine(booking.voucher.code) : t.booking.discount}</span>
+              <span className="tabular-nums">−{formatVnd(booking.discountAmount, intlLocale)}</span>
+            </p>
+          )}
+
           <div className="flex items-center justify-between border-t border-line pt-3">
             <span className="font-semibold text-fg-muted">{t.booking.totalToPay}</span>
             <span className="text-xl font-bold tabular-nums">{formatVnd(booking.totalAmount, intlLocale)}</span>

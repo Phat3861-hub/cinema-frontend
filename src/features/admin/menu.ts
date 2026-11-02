@@ -117,7 +117,6 @@ export const ADMIN_MENU: AdminMenuGroup[] = [
         href: ROUTES.admin.vouchers,
         icon: TicketPercent,
         permissions: ["VOUCHER_MANAGE_GLOBAL", "VOUCHER_MANAGE_CINEMA"],
-        soon: true,
       },
       { key: "products", href: ROUTES.admin.products, icon: Popcorn, permissions: ["PRODUCT_MANAGE"] },
       {

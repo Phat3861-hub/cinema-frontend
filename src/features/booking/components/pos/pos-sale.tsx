@@ -1,9 +1,10 @@
 "use client";
 
-import { Armchair, Banknote, ChevronDown, Minus, Plus, Popcorn, RotateCcw, Trash2, UserRound, X } from "lucide-react";
-import { useRef, useState, type ReactNode } from "react";
+import { Armchair, Banknote, ChevronDown, Minus, Plus, Popcorn, RotateCcw, TicketPercent, Trash2, UserRound, X } from "lucide-react";
+import { useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { CoverImage } from "@/components/ui/cover-image";
+import { controlClasses } from "@/components/ui/field";
 import { TextField } from "@/components/ui/text-field";
 import { ErrorState, Skeleton } from "@/components/ui/states";
 import { useToast } from "@/components/ui/toast";
@@ -11,6 +12,9 @@ import { cinemaBookingApi, productApi } from "@/features/booking/api";
 import { MAX_PRODUCT_QUANTITY } from "@/features/booking/components/food-step";
 import { PosCashDialog } from "@/features/booking/components/pos/pos-cash-dialog";
 import { PRODUCT_CATEGORIES, type Booking, type Product, type ProductCategory } from "@/features/booking/types";
+import { discountOf } from "@/features/promotion/discount";
+import { isVoucherError, voucherErrorMessage } from "@/features/promotion/errors";
+import type { VoucherQuote } from "@/features/promotion/types";
 import { showtimeApi } from "@/features/showtime/api";
 import { SeatLegend, SeatMap, type SeatVisual } from "@/features/showtime/components/seat-map";
 import { useSeatUpdates } from "@/features/showtime/hooks/use-seat-updates";
@@ -37,7 +41,9 @@ interface Customer {
 
 /**
  * POS steps 2–3 for one showtime: touch seat map (live over STOMP) and snack tiles on the left, the order on the
- * right, then cash payment. Mount it with `key={showtime.id}` so a new showtime starts a new order.
+ * right (with an optional voucher), then cash payment. Mount it with `key={showtime.id}` so a new showtime starts a
+ * new order. The voucher is checked once (no use taken) and its discount recomputed locally as the order changes;
+ * the sale checks it again.
  */
 export function PosSale({
   cinemaId,
@@ -70,6 +76,11 @@ export function PosSale({
   const [customerOpen, setCustomerOpen] = useState(false);
   const [customer, setCustomer] = useState<Customer>({ name: "", phone: "", email: "" });
   const [customerErrors, setCustomerErrors] = useState<Partial<Record<keyof Customer, string>>>({});
+  const [voucherOpen, setVoucherOpen] = useState(false);
+  const [voucherCode, setVoucherCode] = useState("");
+  const [voucherError, setVoucherError] = useState<string | null>(null);
+  const [quote, setQuote] = useState<VoucherQuote | null>(null);
+  const [checkingVoucher, setCheckingVoucher] = useState(false);
   const [cash, setCash] = useState<{ open: boolean; key: number }>({ open: false, key: 0 });
   const [selling, setSelling] = useState(false);
   const idempotencyKey = useRef("");
@@ -136,6 +147,38 @@ export function PosSale({
     setCustomer({ name: "", phone: "", email: "" });
     setCustomerErrors({});
     setLimitHit(false);
+    clearVoucher();
+  }
+
+  function clearVoucher() {
+    setQuote(null);
+    setVoucherCode("");
+    setVoucherError(null);
+    setVoucherOpen(false);
+  }
+
+  async function checkVoucher(event: FormEvent) {
+    event.preventDefault();
+    const code = voucherCode.trim();
+    if (!code) return;
+    const email = customer.email.trim();
+    setCheckingVoucher(true);
+    setVoucherError(null);
+    try {
+      setQuote(
+        await cinemaBookingApi.quoteVoucher(cinemaId, {
+          showtimeId: showtime.id,
+          code,
+          subtotal,
+          customerEmail: EMAIL_PATTERN.test(email) ? email : undefined,
+        }),
+      );
+      setVoucherCode("");
+    } catch (error) {
+      setVoucherError(voucherErrorMessage(error, t, intlLocale));
+    } finally {
+      setCheckingVoucher(false);
+    }
   }
 
   function validateCustomer(): boolean {
@@ -167,6 +210,7 @@ export function PosSale({
           customerName: customer.name.trim() || undefined,
           customerPhone: customer.phone.trim() || undefined,
           customerEmail: customer.email.trim() || undefined,
+          voucherCode: quote?.voucher.code,
         },
         idempotencyKey.current,
       );
@@ -174,7 +218,11 @@ export function PosSale({
     } catch (error) {
       setCash((c) => ({ ...c, open: false }));
       const code = errorCodeOf(error);
-      if (code === "SEAT_NOT_AVAILABLE" && error instanceof ApiError && Array.isArray(error.details)) {
+      if (isVoucherError(error)) {
+        // E.g. its last use went to another order since the check: sell without it or with another code
+        toast.error(voucherErrorMessage(error, t, intlLocale));
+        clearVoucher();
+      } else if (code === "SEAT_NOT_AVAILABLE" && error instanceof ApiError && Array.isArray(error.details)) {
         const taken = error.details as number[];
         setSeatStatus(taken, "HELD");
         dropSeats(taken);
@@ -197,7 +245,21 @@ export function PosSale({
     .map((product) => ({ product, quantity: quantities[product.id] }));
   const seatTotal = chosen.reduce((sum, seat) => sum + Number(seat.price), 0);
   const foodTotal = lines.reduce((sum, line) => sum + Number(line.product.price) * line.quantity, 0);
-  const total = seatTotal + foodTotal;
+  const subtotal = seatTotal + foodTotal;
+  const quoteDiscount = quote
+    ? discountOf(
+        {
+          discountType: quote.voucher.discountType,
+          discountValue: quote.voucher.discountValue,
+          maxDiscount: quote.maxDiscount,
+          minOrderValue: quote.minOrderValue,
+        },
+        subtotal,
+      )
+    : null;
+  const belowMinimum = quote !== null && quoteDiscount === null;
+  const discount = quoteDiscount ?? 0;
+  const total = subtotal - discount;
   const itemCount = lines.reduce((sum, line) => sum + line.quantity, 0);
   const visibleProducts = (products.data ?? []).filter((p) => category === "ALL" || p.category === category);
   const categories = PRODUCT_CATEGORIES.filter((c) => (products.data ?? []).some((p) => p.category === c));
@@ -362,6 +424,69 @@ export function PosSale({
           </ul>
         )}
 
+        <div className="flex flex-col gap-2 border-t border-line pt-3">
+          {quote ? (
+            <div
+              className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 ${
+                belowMinimum ? "border-warning/40 bg-warning/10" : "border-success/40 bg-success/10"
+              }`}
+            >
+              <TicketPercent aria-hidden className={`size-5 shrink-0 ${belowMinimum ? "text-warning" : "text-success"}`} />
+              <div className="min-w-0 flex-1">
+                <p className="font-mono text-sm font-bold">{quote.voucher.code}</p>
+                <p className={`text-xs font-medium ${belowMinimum ? "text-warning" : "truncate text-fg-muted"}`} role={belowMinimum ? "alert" : undefined}>
+                  {belowMinimum ? t.promotion.belowMinimum(formatVnd(quote.minOrderValue, intlLocale)) : quote.voucher.name}
+                </p>
+              </div>
+              {!belowMinimum && <span className="shrink-0 font-bold text-success tabular-nums">−{formatVnd(discount, intlLocale)}</span>}
+              <QtyButton label={t.promotion.removeCode(quote.voucher.code)} onClick={clearVoucher} disabled={selling}>
+                <X aria-hidden className="size-4" />
+              </QtyButton>
+            </div>
+          ) : voucherOpen ? (
+            <>
+              <form onSubmit={checkVoucher} className="flex gap-2">
+                <input
+                  value={voucherCode}
+                  onChange={(event) => {
+                    setVoucherCode(event.target.value.toUpperCase());
+                    setVoucherError(null);
+                  }}
+                  placeholder={t.promotion.codePlaceholder}
+                  aria-label={t.promotion.voucher}
+                  aria-invalid={voucherError !== null || undefined}
+                  aria-describedby={voucherError ? "pos-voucher-error" : undefined}
+                  maxLength={30}
+                  autoComplete="off"
+                  autoFocus
+                  className={`${controlClasses({ invalid: voucherError !== null })} min-w-0 flex-1 font-mono uppercase`}
+                />
+                <Button type="submit" className="shrink-0" loading={checkingVoucher} disabled={!voucherCode.trim() || selling}>
+                  {t.promotion.apply}
+                </Button>
+                <QtyButton label={t.common.cancel} onClick={clearVoucher}>
+                  <X aria-hidden className="size-4" />
+                </QtyButton>
+              </form>
+              {voucherError && (
+                <p id="pos-voucher-error" role="alert" className="text-xs font-semibold text-danger">
+                  {voucherError}
+                </p>
+              )}
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setVoucherOpen(true)}
+              disabled={selling}
+              className="flex h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-line-strong text-sm font-bold text-fg-2 transition-colors hover:border-accent hover:text-fg focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <TicketPercent aria-hidden className="size-5" />
+              {t.promotion.addVoucher}
+            </button>
+          )}
+        </div>
+
         <div className="flex flex-col gap-3 border-t border-line pt-3">
           <button
             type="button"
@@ -412,13 +537,19 @@ export function PosSale({
             <dt>{t.booking.snacks}</dt>
             <dd className="tabular-nums">{formatVnd(foodTotal, intlLocale)}</dd>
           </div>
+          {discount > 0 && quote && (
+            <div className="flex justify-between text-success">
+              <dt>{t.promotion.discountLine(quote.voucher.code)}</dt>
+              <dd className="tabular-nums">−{formatVnd(discount, intlLocale)}</dd>
+            </div>
+          )}
           <div className="mt-1 flex items-baseline justify-between">
             <dt className="text-base">{t.booking.totalToPay}</dt>
             <dd className="text-3xl font-bold text-accent tabular-nums">{formatVnd(total, intlLocale)}</dd>
           </div>
         </dl>
 
-        <Button size="lg" fullWidth className="h-16 text-lg" disabled={chosen.length === 0 || selling} onClick={openCash}>
+        <Button size="lg" fullWidth className="h-16 text-lg" disabled={chosen.length === 0 || selling || belowMinimum} onClick={openCash}>
           <Banknote aria-hidden className="size-6" />
           {t.admin.pos.collectCash}
         </Button>

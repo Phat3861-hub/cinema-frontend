@@ -5,10 +5,12 @@ import type {
   BookingStatus,
   CinemaBookingFilter,
   CounterBookingRequest,
+  CounterVoucherQuoteRequest,
   Product,
   ProductCategory,
   ProductRequest,
 } from "@/features/booking/types";
+import type { VoucherQuote } from "@/features/promotion/types";
 import { apiFetch } from "@/lib/api-client";
 import type { PageResponse } from "@/types/api";
 
@@ -34,6 +36,10 @@ export const bookingApi = {
   /** Replaces the snacks of a pending booking (empty list = none). */
   replaceItems: (bookingId: Id, items: BookingItemInput[]) =>
     apiFetch<Booking>(`/bookings/${bookingId}/items`, { method: "PUT", body: { items } }),
+  /** Applies a voucher to a pending booking (replacing its voucher); one use is taken until it expires unpaid. */
+  applyVoucher: (bookingId: Id, code: string) =>
+    apiFetch<Booking>(`/bookings/${bookingId}/voucher`, { method: "PUT", body: { code } }),
+  removeVoucher: (bookingId: Id) => apiFetch<Booking>(`/bookings/${bookingId}/voucher`, { method: "DELETE" }),
   cancel: (bookingId: Id) => apiFetch<Booking>(`/bookings/${bookingId}/cancel`, { method: "PATCH" }),
   /** Own bookings, newest first. */
   mine: (query: { status?: BookingStatus; page?: number; size?: number } = {}) =>
@@ -50,6 +56,9 @@ export const cinemaBookingApi = {
       body,
       headers: { "Idempotency-Key": idempotencyKey },
     }),
+  /** Discount a voucher gives this counter order now; no use is taken (the sale checks again). */
+  quoteVoucher: (cinemaId: Id, body: CounterVoucherQuoteRequest) =>
+    apiFetch<VoucherQuote>(`/cinemas/${cinemaId}/counter-bookings/voucher-quote`, { method: "POST", body }),
   /** Newest first. */
   list: (cinemaId: Id, filter: CinemaBookingFilter) =>
     apiFetch<PageResponse<Booking>>(`/cinemas/${cinemaId}/bookings`, { query: { ...filter } }),
