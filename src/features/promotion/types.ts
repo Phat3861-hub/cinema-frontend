@@ -37,6 +37,8 @@ export interface Voucher {
   endAt: string;
   status: VoucherStatus;
   state: VoucherState;
+  /** Listed on the public offers page while running. */
+  publicOffer: boolean;
   createdAt: string;
 }
 
@@ -55,6 +57,7 @@ export interface VoucherRequest {
   startAt: string;
   endAt: string;
   status: VoucherStatus;
+  publicOffer?: boolean;
 }
 
 /** Without `cinemaId` / `globalOnly`: every voucher the user may manage. */
@@ -82,4 +85,78 @@ export interface VoucherQuote {
   discount: number;
   maxDiscount: number | null;
   minOrderValue: number;
+}
+
+/** Movie a banner or offer points to (`slug` builds the movie page link). */
+export interface MovieLink {
+  id: number;
+  slug: string;
+  title: string;
+}
+
+/** A running public voucher, as the offers page shows it (no usage figures). */
+export interface PublicVoucher {
+  code: string;
+  name: string;
+  description: string | null;
+  discountType: DiscountType;
+  discountValue: number;
+  maxDiscount: number | null;
+  minOrderValue: number;
+  /** Null = every cinema. */
+  cinema: VoucherRef | null;
+  /** Null = every movie. */
+  movie: MovieLink | null;
+  /** Exclusive. */
+  endAt: string;
+}
+
+export type BannerStatus = "ACTIVE" | "INACTIVE";
+/** Derived by the backend from status and schedule at response time. */
+export type BannerState = "INACTIVE" | "UPCOMING" | "SHOWING" | "ENDED";
+/** NONE = no click target, MOVIE = movie page, URL = internal path or external link. */
+export type BannerLinkType = "NONE" | "MOVIE" | "URL";
+
+export const BANNER_STATES: BannerState[] = ["SHOWING", "UPCOMING", "ENDED", "INACTIVE"];
+
+/** Home page hero slide. */
+export interface PublicBanner {
+  id: number;
+  title: string;
+  subtitle: string | null;
+  imageUrl: string;
+  linkType: BannerLinkType;
+  movie: MovieLink | null;
+  linkUrl: string | null;
+}
+
+export interface Banner extends PublicBanner {
+  /** Position on the home page (lower first). */
+  sortOrder: number;
+  startAt: string;
+  /** Exclusive. */
+  endAt: string;
+  status: BannerStatus;
+  state: BannerState;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BannerRequest {
+  title: string;
+  subtitle?: string;
+  /** https only. */
+  imageUrl: string;
+  linkType: BannerLinkType;
+  movieId?: number;
+  /** Internal path ("/movies") or http(s) URL. */
+  linkUrl?: string;
+  startAt: string;
+  endAt: string;
+  status?: BannerStatus;
+}
+
+export interface BannerFilter {
+  keyword?: string;
+  state?: BannerState;
 }

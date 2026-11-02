@@ -71,7 +71,7 @@ export const ADMIN_MENU: AdminMenuGroup[] = [
     items: [
       { key: "movies", href: ROUTES.admin.movies, icon: Film, permissions: ["MOVIE_MANAGE"] },
       { key: "genres", href: ROUTES.admin.genres, icon: Tags, permissions: ["GENRE_MANAGE"] },
-      { key: "banners", href: ROUTES.admin.banners, icon: Image, permissions: ["BANNER_MANAGE"], soon: true },
+      { key: "banners", href: ROUTES.admin.banners, icon: Image, permissions: ["BANNER_MANAGE"] },
       { key: "reviews", href: ROUTES.admin.reviews, icon: MessageSquareText, permissions: ["REVIEW_MODERATE"], soon: true },
     ],
   },

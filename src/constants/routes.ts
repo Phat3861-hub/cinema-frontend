@@ -7,6 +7,7 @@ export const ROUTES = {
   movieDetail: (slug: string) => `/movies/${slug}`,
   cinemas: "/cinemas",
   cinemaDetail: (slug: string) => `/cinemas/${slug}`,
+  offers: "/offers",
   booking: (showtimeId: Id) => `/booking/${showtimeId}`,
   myTickets: "/my-tickets",
   myTicket: (bookingId: Id) => `/my-tickets/${bookingId}`,

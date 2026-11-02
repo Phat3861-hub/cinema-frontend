@@ -22,6 +22,7 @@ function navItems(t: Messages) {
     { href: ROUTES.home, label: t.nav.home },
     { href: ROUTES.movies, label: t.nav.movies },
     { href: ROUTES.cinemas, label: t.nav.cinemas },
+    { href: ROUTES.offers, label: t.nav.offers },
   ];
 }
 
