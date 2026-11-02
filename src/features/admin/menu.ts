@@ -55,14 +55,13 @@ export const ADMIN_MENU: AdminMenuGroup[] = [
   {
     key: "counter",
     items: [
-      { key: "pos", href: ROUTES.admin.pos, icon: Store, permissions: ["BOOKING_COUNTER_SELL"], soon: true },
+      { key: "pos", href: ROUTES.admin.pos, icon: Store, permissions: ["BOOKING_COUNTER_SELL"] },
       { key: "checkIn", href: ROUTES.admin.checkIn, icon: QrCode, permissions: ["TICKET_CHECKIN"], soon: true },
       {
         key: "bookings",
         href: ROUTES.admin.bookings,
         icon: ReceiptText,
         permissions: ["BOOKING_VIEW_CINEMA", "BOOKING_VIEW_ALL"],
-        soon: true,
       },
       { key: "refunds", href: ROUTES.admin.refunds, icon: Undo2, permissions: ["REFUND_APPROVE"], soon: true },
     ],

@@ -4,12 +4,22 @@
 > Cập nhật theo skill `/update-context` (rule CLAUDE.md §0). Ghi **trạng thái hiện tại**, không chép lại code hay git log.
 > Trạng thái backend / API đã sẵn sàng: `../cinema-backend/docs/project-context.md` (mục 4).
 >
-> **Cập nhật lần cuối:** 2026-11-01 (luồng đặt vé giữ ghế + bắp nước, vé của tôi, admin bắp nước; nhánh `feature/booking-ui`)
+> **Cập nhật lần cuối:** 2026-11-02 (POS bán tại quầy, đơn đặt vé theo rạp, vé điện tử QR; nhánh `feature/booking-counter-ui`)
 
 ## 1. Trạng thái hiện tại
-- `feature/auth-ui` (`00136e2`) và `feature/ui-modules` (`650fd0b`) đã commit. Nhánh **`feature/booking-ui`** (từ
-  `feature/ui-modules`), **chưa commit**: UI cho booking PR 1 của backend (giữ ghế, bắp nước, lịch sử đặt vé, quản lý sản phẩm).
-  Lint / typecheck / build xanh; đã test trên Chrome (mục 3).
+- `feature/auth-ui`, `feature/ui-modules` (PR #2), `feature/booking-ui` (PR #3) đã merge. Nhánh **`feature/booking-counter-ui`**
+  (từ `develop`), **chưa commit**: UI cho booking PR 2 của backend (POS, đơn đặt vé theo rạp, vé QR). Lint / typecheck / build xanh;
+  đã test trên Chrome (mục 3).
+- **POS** `/admin/pos` (`features/booking/components/pos/`, `BOOKING_COUNTER_SELL`): giao diện cảm ứng nút lớn cho rạp đang chọn ở
+  topbar – chọn suất (dải 7 ngày, giờ chiếu nhóm theo phim) → sơ đồ ghế cỡ lớn (`SeatMap size="lg"`, realtime, tối đa 8) + tab bắp
+  nước (chạm = +1) + giỏ bên phải (bỏ ghế, stepper, thông tin khách tùy chọn) → hộp **thu tiền mặt** (bàn phím số, nút tiền gợi ý
+  làm tròn lên mệnh giá, tiền thối) → màn kết quả (tiền thối, in vé, "Khách tiếp theo" giữ nguyên suất). `Idempotency-Key` sinh
+  mỗi lần mở hộp thu tiền. Chỉ tiền mặt (VNPay làm sau).
+- **Đơn đặt vé** `/admin/bookings` (`admin-bookings-screen.tsx`): rạp đang chọn, lọc ngày chiếu từ–đến (≤ 31), trạng thái, kênh,
+  tìm khách; tra mã đơn riêng; bấm dòng → hộp chi tiết (vé, bắp nước, người bán) + **in lại vé**.
+- **Vé điện tử** `/my-tickets/[bookingId]` (`booking-tickets.tsx`): `TicketCard` có QR (`qrcode.react` 4.2.0, nền trắng) từ
+  `qr_token`; vé không VALID làm mờ. In vé: `PrintPortal` (`components/ui/print-portal.tsx`) gắn vào `body` + `@media print`
+  trong `globals.css` ẩn mọi thứ khác → in đen trắng (`PrintableTickets`, 1 vé / trang + biên nhận).
 - **Realtime ghế**: `@stomp/stompjs` 7.4.0 (pin cứng), hook `features/showtime/hooks/use-seat-updates.ts` – WebSocket thuần
   (`env.wsUrl` đổi `http`→`ws`, backend không dùng SockJS), tự kết nối lại 5 s và tải lại sơ đồ sau khi kết nối lại.
 - **Theme**: token ngữ nghĩa trong `globals.css` (`:root` = light, `.dark` = dark; `bg-page/surface`, `text-fg/-muted`, `text-accent`…),
@@ -38,7 +48,7 @@
   loại ghế, suất chiếu (theo ngày, tạo 1 / hàng loạt, sửa, hủy, khóa ghế theo suất, hiển thị slot trùng), nhân sự rạp,
   người dùng (tra theo ID → khóa/mở, gán/gỡ role), **vai trò & quyền** (ma trận theo module, ADMIN chỉ xem, hộp xác nhận
   thêm/bỏ, chế độ so sánh), **bắp nước** (`/admin/products`, PRODUCT_MANAGE: lọc theo loại, thêm/sửa/ngừng bán, xóa bị chặn
-  khi đã có trong đơn). Các mục chưa có API (POS, check-in, đơn đặt vé, hoàn tiền, banner, đánh giá, voucher, báo cáo,
+  khi đã có trong đơn), POS, đơn đặt vé. Các mục chưa có API (check-in, hoàn tiền, banner, đánh giá, voucher, báo cáo,
   audit log) là trang "Sắp có".
 
 ## 2. Môi trường dev
@@ -52,8 +62,9 @@
 | Nhóm | Route | Trạng thái |
 |---|---|---|
 | Auth | `/login`, `/register`, `/register/check-email`, `/verify-email`, `/forgot-password`, `/reset-password` | Xong, i18n |
-| Khách hàng | `/`, `/movies`, `/movies/[slug]`, `/cinemas`, `/cinemas/[slug]`, `/booking/[showtimeId]`, `/account`, `/my-tickets` | Xong với API hiện có; booking dừng ở bước thanh toán (chờ VNPay) |
+| Khách hàng | `/`, `/movies`, `/movies/[slug]`, `/cinemas`, `/cinemas/[slug]`, `/booking/[showtimeId]`, `/account`, `/my-tickets`, `/my-tickets/[bookingId]` | Xong với API hiện có; booking dừng ở bước thanh toán (chờ VNPay) |
 | Admin nội dung | `/admin/movies(/new,/[id])`, `/admin/genres` | Xong |
+| Admin quầy vé | `/admin/pos`, `/admin/bookings` | Xong (chỉ tiền mặt) |
 | Admin kinh doanh | `/admin/products` | Xong |
 | Admin rạp | `/admin/cinemas(/new,/[id])`, `/admin/cinemas/[id]/rooms\|staff\|showtimes`, `/admin/rooms/[id]/layout`, `/admin/seat-types`; `/admin/rooms\|staff\|showtimes` chuyển tới rạp đang chọn | Xong |
 | Admin hệ thống | `/admin/users`, `/admin/users/[id]`, `/admin/roles` | Xong (user chỉ tra theo ID) |
@@ -64,13 +75,16 @@ TICKET_STAFF, CONTENT_MANAGER (menu đúng quyền, chặn URL không quyền, 4
 Đã test trên Chrome 2026-11-01: giữ ghế → bắp nước → thanh toán → hủy; 2 tab cùng suất (ghế đổi trạng thái trực tiếp, ghế đang
 chọn bị tab kia giữ → bỏ + toast); vé của tôi (đơn chờ thanh toán + hủy); admin bắp nước (CINEMA_MANAGER bị chặn, ADMIN sửa,
 xóa sản phẩm đã có trong đơn → `PRODUCT_IN_USE`). Chưa test: hết giờ giữ ghế thật (10 phút), light theme / en của màn mới.
+Đã test trên Chrome 2026-11-02: ADMIN mở `/admin/pos` → "Không có quyền", xem đơn của rạp + tra mã + chi tiết; staff2 (Hà Đông)
+bán quầy 4 ghế (VIP + đôi) + bắp nước, thu tiền / tiền thối, "Khách tiếp theo"; 2 tab POS cùng suất (ghế bán ở tab kia đổi trạng thái
+ngay, ghế đang chọn bị bán → bỏ + **1** toast); customer3 xem vé QR. Chưa test: in thật ra máy in, light theme / en của màn mới.
 Chưa kiểm tra được giao diện mobile bằng Chrome (cửa sổ không resize).
 
 ## 4. Bước tiếp theo
-1. Chủ dự án review + commit nhánh `feature/booking-ui` (lệnh PowerShell, không trailer Claude).
-2. Backend PR 2 (`feature/booking-counter`): màn vé có QR (`/my-tickets/[bookingId]`), POS bán tại quầy, danh sách đơn theo rạp
-   (`/admin/bookings`), tab Đặt vé trong chi tiết user.
-3. Backend PR 3 (`feature/payment-vnpay`): bật nút Thanh toán, trang chờ kết quả + bước Vé, voucher.
+1. Chủ dự án review + commit nhánh `feature/booking-counter-ui` (lệnh PowerShell, không trailer Claude).
+2. Backend PR 3 (`feature/payment-vnpay`): bật nút Thanh toán, trang chờ kết quả + bước Vé (dùng `TicketCard`), POS thêm VNPay QR,
+   voucher. Sau đó check-in QR (`/admin/check-in`), hoàn tiền.
+3. Tab Đặt vé trong chi tiết user (`/admin/users/[id]`, đang "Sắp có") – cần backend API booking theo user.
 4. Kiểm tra giao diện mobile (DevTools device mode) cho header/drawer, sidebar admin, bảng suất chiếu, trình thiết kế ghế, luồng đặt vé.
 5. Khi backend có API: danh sách user phân trang (thay màn tra theo ID), voucher, báo cáo, banner, đánh giá, audit log.
 6. Backend trả mô tả role bằng tiếng Anh (`description`) → cần dịch theo `code` hoặc backend thêm bản vi.
@@ -87,6 +101,9 @@ Chưa kiểm tra được giao diện mobile bằng Chrome (cửa sổ không re
 | 2026-10-30 | Chặn `/admin` bằng `AdminGuard` client (dựa `/auth/me`), không dùng `proxy.ts` | FE không đọc được JWT HttpOnly; backend vẫn chặn mọi API |
 | 2026-11-01 | "Đổi ghế" từ bước sau **hủy đơn đang giữ** rồi mới quay lại sơ đồ (giữ nguyên lựa chọn) | Ghế của mình đang HELD nên không chọn/bỏ được trên sơ đồ; hủy rõ ràng dễ hiểu hơn để backend tự thay đơn |
 | 2026-11-01 | Lịch sử đặt vé tải 1 trang 100 đơn, chia tab ở client | `/bookings/me` chỉ lọc 1 trạng thái, tab "Sắp tới/Đã xem" phụ thuộc giờ chiếu; khách hiếm khi quá 100 đơn |
+| 2026-11-02 | POS / đơn đặt vé dùng **rạp chọn ở topbar**, không có `cinemaId` trong URL (khác các trang theo rạp) | Màn làm việc cố định 1 rạp, không cần deep-link; cookie `admin_cinema` giữ rạp khi tải lại |
+| 2026-11-02 | POS chỉ thu tiền mặt, máy tính tiền thối ở client (không gửi số tiền khách đưa lên backend) | Chủ dự án: VNPay làm sau; backend chưa có `payments` |
+| 2026-11-02 | In vé bằng portal dưới `body` + `@media print`, không mở cửa sổ mới | Không bị chặn popup, in được cả từ trong `<dialog>`; dùng chung cho POS, đơn đặt vé, vé của khách |
 | 2026-10-30 | Validation client lặp lại rule DTO backend; `VALIDATION_FAILED` chỉ hiện "Giá trị không hợp lệ" theo field | Backend chưa trả mã lỗi theo field |
 
 ## 6. Vấn đề mở / lưu ý
@@ -104,9 +121,15 @@ Chưa kiểm tra được giao diện mobile bằng Chrome (cửa sổ không re
   mềm) → thẻ hiện "Suất chiếu không còn hiển thị".
 - Thay đổi ghế xảy ra giữa lúc tải sơ đồ và lúc WebSocket kết nối lần đầu (~100 ms) có thể bị lỡ; bấm "Tiếp tục" vẫn an toàn vì
   backend kiểm tra lại.
+- Dev overlay của Next báo "Could not validate … instant navigation" ở **mọi** trang admin (trang client-only sau `AdminGuard`) –
+  chỉ là cảnh báo dev, không ảnh hưởng build.
+- Bán quầy broadcast HELD rồi BOOKED liền nhau ⇒ `dropSeats` đọc lựa chọn qua ref (`selectedRef`) để không toast 2 lần (áp dụng cả
+  `booking-screen.tsx`).
+- Bấm nút ngay khi trang vừa tải (trước hydrate) không có tác dụng – bình thường với dev server.
 - Skill `ui-ux-pro-max` ở `.claude/skills/SKILL.md` thiếu thư mục riêng + `scripts/` → không nạp được.
 
 ## 7. Nhật ký session (mới nhất trên cùng, giữ tối đa 10 dòng)
+- **2026-11-02** – Nhánh `feature/booking-counter-ui`: POS cảm ứng (chọn suất, ghế lớn realtime, bắp nước, thu tiền mặt, in vé), đơn đặt vé theo rạp (lọc, tra mã, chi tiết, in lại), vé điện tử QR (`qrcode.react`), `PrintPortal`; sửa toast ghế bị lấy hiện 2 lần. Test Chrome ADMIN / staff2 / customer3, 2 tab POS.
 - **2026-11-01** – Nhánh `feature/booking-ui`: `@stomp/stompjs`, hook ghế realtime, luồng đặt vé (giữ ghế + đếm ngược, bắp nước, xem đơn, hủy), vé của tôi theo tab, admin bắp nước, i18n + mã lỗi booking. Test Chrome 2 tab. Nâng Next 16.4.3 (lỗ hổng), sửa hydration warning do extension.
 - **2026-10-31** – Nhánh `feature/ui-modules`: token ngữ nghĩa light/dark, i18n vi/en, bộ `components/ui`, màn khách hàng (home, phim, rạp, chọn ghế, tài khoản) + toàn bộ admin theo permission (phim, thể loại, rạp, phòng, sơ đồ ghế, loại ghế, suất chiếu, nhân sự, user, role). Seed dữ liệu test, test Chrome 4 role.
 - **2026-10-30** – Nhánh `feature/auth-ui`: token Ticketor + Manrope, api-client refresh single-flight, các màn auth, `AdminGuard`.

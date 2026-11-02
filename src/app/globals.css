@@ -120,3 +120,14 @@ body {
     transition: none;
   }
 }
+
+/* Printing (POS tickets, "My tickets"): only the <PrintPortal> content is printed, always black on white. */
+@media print {
+  body > *:not(.print-root) {
+    display: none !important;
+  }
+  body {
+    background: var(--color-white);
+    color: var(--color-black);
+  }
+}

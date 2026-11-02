@@ -3,6 +3,8 @@ import type {
   BookingHoldRequest,
   BookingItemInput,
   BookingStatus,
+  CinemaBookingFilter,
+  CounterBookingRequest,
   Product,
   ProductCategory,
   ProductRequest,
@@ -37,4 +39,18 @@ export const bookingApi = {
   mine: (query: { status?: BookingStatus; page?: number; size?: number } = {}) =>
     apiFetch<PageResponse<Booking>>("/bookings/me", { query }),
   get: (bookingId: Id) => apiFetch<Booking>(`/bookings/${bookingId}`),
+};
+
+/** Cinema staff: counter sales (BOOKING_COUNTER_SELL) and the cinema's bookings (BOOKING_VIEW_*), checked per cinema. */
+export const cinemaBookingApi = {
+  /** Cash sale, CONFIRMED at once with its tickets. Same `idempotencyKey` = same booking (double click). */
+  sell: (cinemaId: Id, body: CounterBookingRequest, idempotencyKey: string) =>
+    apiFetch<Booking>(`/cinemas/${cinemaId}/counter-bookings`, {
+      method: "POST",
+      body,
+      headers: { "Idempotency-Key": idempotencyKey },
+    }),
+  /** Newest first. */
+  list: (cinemaId: Id, filter: CinemaBookingFilter) =>
+    apiFetch<PageResponse<Booking>>(`/cinemas/${cinemaId}/bookings`, { query: { ...filter } }),
 };

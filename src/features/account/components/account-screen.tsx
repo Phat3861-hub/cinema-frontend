@@ -26,12 +26,16 @@ import {
   validateNewPassword,
   type FieldErrors,
 } from "@/features/auth/validation";
+import { BookingTickets } from "@/features/booking/components/booking-tickets";
 import { MyBookings } from "@/features/booking/components/my-bookings";
 import { useT } from "@/i18n";
 import { errorCodeOf, getErrorMessage } from "@/lib/error-messages";
 
-/** Profile sidebar (Ticketor Profile) + account info, change password, sign out of every device. */
-export function AccountScreen({ section }: { section: "account" | "tickets" }) {
+/**
+ * Profile sidebar (Ticketor Profile) + account info, change password, sign out of every device; the tickets section
+ * shows the booking history, or one booking's e-tickets when `bookingId` is given.
+ */
+export function AccountScreen({ section, bookingId }: { section: "account" | "tickets"; bookingId?: number }) {
   const router = useRouter();
   const pathname = usePathname();
   const { status, user } = useSession();
@@ -45,7 +49,13 @@ export function AccountScreen({ section }: { section: "account" | "tickets" }) {
   return (
     <div className="mx-auto grid w-full max-w-[1232px] items-start gap-6 px-4 py-8 lg:grid-cols-[260px_1fr]">
       <AccountNav user={user} section={section} />
-      {section === "account" ? <AccountDetails user={user} /> : <MyBookings />}
+      {section === "account" ? (
+        <AccountDetails user={user} />
+      ) : bookingId !== undefined ? (
+        <BookingTickets bookingId={bookingId} />
+      ) : (
+        <MyBookings />
+      )}
     </div>
   );
 }

@@ -97,7 +97,13 @@ function BookingFlow({
   const { status: sessionStatus } = useSession();
 
   const [step, setStep] = useState<Step>("seats");
-  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [selected, setSelectedState] = useState<Set<number>>(new Set());
+  // Read by seat broadcasts, which can arrive back to back (HELD then BOOKED) before the next render.
+  const selectedRef = useRef(selected);
+  function setSelected(next: Set<number>) {
+    selectedRef.current = next;
+    setSelectedState(next);
+  }
   const [limitHit, setLimitHit] = useState(false);
   const [booking, setBooking] = useState<Booking | null>(null);
   /** Local clock time the hold ends (server hold length, so a skewed browser clock doesn't matter). */
@@ -116,9 +122,10 @@ function BookingFlow({
 
   /** Removes seats someone else just took (and their couple partners) from the selection, with a toast. */
   function dropSeats(seatIds: number[]) {
-    const taken = seatIds.filter((id) => selected.has(id));
+    const current = selectedRef.current;
+    const taken = seatIds.filter((id) => current.has(id));
     if (taken.length === 0) return;
-    const next = new Set(selected);
+    const next = new Set(current);
     for (const id of taken) {
       next.delete(id);
       const partner = byId.get(id)?.pairedSeatId;
