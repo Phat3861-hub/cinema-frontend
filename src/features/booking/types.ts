@@ -5,6 +5,10 @@ import type { Showtime } from "@/features/showtime/types";
 export type ProductCategory = "POPCORN" | "DRINK" | "SNACK" | "COMBO";
 export type BookingStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "EXPIRED" | "REFUNDED";
 export type BookingChannel = "ONLINE" | "COUNTER";
+export type TicketStatus = "VALID" | "USED" | "CANCELLED" | "REFUNDED";
+
+export const BOOKING_STATUSES: BookingStatus[] = ["CONFIRMED", "PENDING", "CANCELLED", "EXPIRED", "REFUNDED"];
+export const BOOKING_CHANNELS: BookingChannel[] = ["COUNTER", "ONLINE"];
 
 export const PRODUCT_CATEGORIES: ProductCategory[] = ["COMBO", "POPCORN", "DRINK", "SNACK"];
 
@@ -47,6 +51,31 @@ export interface BookingItem {
   totalPrice: number;
 }
 
+/** Issued when a booking is confirmed; `qrToken` is the value to encode in the QR code. */
+export interface BookingTicket {
+  id: number;
+  ticketCode: string;
+  seatCode: string;
+  price: number;
+  status: TicketStatus;
+  qrToken: string;
+  checkedInAt: string | null;
+}
+
+/** Details typed in at the counter, completed from the customer's account (`userId` null = no account). */
+export interface BookingCustomer {
+  userId: number | null;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+}
+
+export interface BookingSeller {
+  id: number;
+  fullName: string;
+  email: string;
+}
+
 export interface Booking {
   id: number;
   bookingCode: string;
@@ -57,6 +86,12 @@ export interface Booking {
   /** Seats held or bought; empty once an unpaid booking expired or was cancelled. */
   seats: BookingSeat[];
   items: BookingItem[];
+  /** One per seat once CONFIRMED. */
+  tickets: BookingTicket[];
+  /** Null for an anonymous counter sale. */
+  customer: BookingCustomer | null;
+  /** Staff member of a counter sale (null online). */
+  soldBy: BookingSeller | null;
   subtotal: number;
   discountAmount: number;
   totalAmount: number;
@@ -75,4 +110,27 @@ export interface BookingHoldRequest {
 export interface BookingItemInput {
   productId: number;
   quantity: number;
+}
+
+/** BOK-09: cash sale at the counter, confirmed at once. Customer details are optional. */
+export interface CounterBookingRequest {
+  showtimeId: number;
+  seatIds: number[];
+  items: BookingItemInput[];
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
+}
+
+/** Days are showtime days (Vietnam); `code` / `showtimeId` replace the date range. */
+export interface CinemaBookingFilter {
+  from?: string;
+  to?: string;
+  showtimeId?: number;
+  status?: BookingStatus;
+  channel?: BookingChannel;
+  keyword?: string;
+  code?: string;
+  page?: number;
+  size?: number;
 }

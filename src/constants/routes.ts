@@ -9,6 +9,7 @@ export const ROUTES = {
   cinemaDetail: (slug: string) => `/cinemas/${slug}`,
   booking: (showtimeId: Id) => `/booking/${showtimeId}`,
   myTickets: "/my-tickets",
+  myTicket: (bookingId: Id) => `/my-tickets/${bookingId}`,
   account: "/account",
   login: "/login",
   register: "/register",

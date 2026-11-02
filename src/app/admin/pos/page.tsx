@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { PagePlaceholder } from "@/components/layout/page-placeholder";
+import { PosScreen } from "@/features/booking/components/pos/pos-screen";
 
 export const metadata: Metadata = { title: "Bán vé tại quầy" };
 
-export default function Page() {
-  return <PagePlaceholder title="admin.menu.pos" description="admin.soon.pos" />;
+export default function AdminPosPage() {
+  return <PosScreen />;
 }

@@ -25,6 +25,14 @@ const VISUALS: Record<SeatVisual, string> = {
   blocked: "border-transparent bg-neutral-600 text-neutral-300",
 };
 
+/** `lg` = touch-size seats for the counter (POS). */
+type SeatMapSize = "md" | "lg";
+
+const SIZES: Record<SeatMapSize, { column: string; row: string; seat: string }> = {
+  md: { column: "minmax(1.75rem, 2.25rem)", row: "2rem", seat: "h-8 text-[11px]" },
+  lg: { column: "minmax(2.25rem, 3rem)", row: "2.75rem", seat: "h-11 text-xs" },
+};
+
 export function rowLabels(totalRows: number): string[] {
   return Array.from({ length: totalRows }, (_, i) => String.fromCharCode(65 + i));
 }
@@ -42,6 +50,7 @@ export function SeatMap<S extends MapSeat>({
   onSeat,
   isInteractive,
   seatLabel,
+  size = "md",
 }: {
   totalRows: number;
   totalColumns: number;
@@ -51,12 +60,14 @@ export function SeatMap<S extends MapSeat>({
   onSeat?: (seat: S) => void;
   isInteractive?: (seat: S) => boolean;
   seatLabel?: (seat: S) => string;
+  size?: SeatMapSize;
 }) {
   const t = useT();
   const colors = new Map(seatTypes.map((type) => [type.code, type.color]));
   const byId = new Map(seats.map((seat) => [seat.id, seat]));
   const rows = rowLabels(totalRows);
-  const gridStyle: CSSProperties = { gridTemplateColumns: `repeat(${totalColumns}, minmax(1.75rem, 2.25rem))` };
+  const dims = SIZES[size];
+  const gridStyle: CSSProperties = { gridTemplateColumns: `repeat(${totalColumns}, ${dims.column})` };
 
   const cells: ReactNode[] = [];
   for (const seat of seats) {
@@ -74,7 +85,7 @@ export function SeatMap<S extends MapSeat>({
       ...(look === "available" && { borderColor: colors.get(seat.seatType) ?? undefined }),
     };
     const className =
-      `flex h-8 items-center justify-center gap-1 rounded-t-lg rounded-b border-2 text-[11px] font-bold transition-colors ` +
+      `flex ${dims.seat} items-center justify-center gap-1 rounded-t-lg rounded-b border-2 font-bold transition-colors ` +
       `focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent ${VISUALS[look]} ` +
       (interactive ? "cursor-pointer" : "cursor-not-allowed");
     const content = look === "blocked" ? <X aria-hidden className="size-3.5" /> : pair ? `${number}·${pair.seatCode.slice(pair.rowLabel.length)}` : number;
@@ -110,20 +121,20 @@ export function SeatMap<S extends MapSeat>({
           <span className="text-xs font-bold tracking-[0.3em] text-fg-muted">{t.seat.screen}</span>
         </div>
         <div className="flex gap-2">
-          <RowLetters rows={rows} />
-          <div className="grid gap-1.5" style={{ ...gridStyle, gridTemplateRows: `repeat(${totalRows}, 2rem)` }}>
+          <RowLetters rows={rows} height={dims.row} />
+          <div className="grid gap-1.5" style={{ ...gridStyle, gridTemplateRows: `repeat(${totalRows}, ${dims.row})` }}>
             {cells}
           </div>
-          <RowLetters rows={rows} />
+          <RowLetters rows={rows} height={dims.row} />
         </div>
       </div>
     </div>
   );
 }
 
-function RowLetters({ rows }: { rows: string[] }) {
+function RowLetters({ rows, height }: { rows: string[]; height: string }) {
   return (
-    <div aria-hidden className="grid gap-1.5" style={{ gridTemplateRows: `repeat(${rows.length}, 2rem)` }}>
+    <div aria-hidden className="grid gap-1.5" style={{ gridTemplateRows: `repeat(${rows.length}, ${height})` }}>
       {rows.map((row) => (
         <span key={row} className="flex w-5 items-center justify-center text-xs font-bold text-fg-subtle">
           {row}

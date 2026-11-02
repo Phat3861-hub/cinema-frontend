@@ -24,7 +24,7 @@ type Tab = "upcoming" | "watched" | "cancelled";
 /** A customer rarely has more; the backend caps a page at 100. */
 const HISTORY_SIZE = 100;
 
-const STATUS_TONES: Record<BookingStatus, BadgeTone> = {
+export const BOOKING_STATUS_TONES: Record<BookingStatus, BadgeTone> = {
   PENDING: "warning",
   CONFIRMED: "success",
   CANCELLED: "neutral",
@@ -163,7 +163,7 @@ function BookingCard({ booking, now, onCancel }: { booking: Booking; now: number
               {t.booking.bookingCode}: <span className="font-mono font-bold text-fg-2">{booking.bookingCode}</span>
             </p>
           </div>
-          <Badge tone={STATUS_TONES[status]}>{t.booking.status[status]}</Badge>
+          <Badge tone={BOOKING_STATUS_TONES[status]}>{t.booking.status[status]}</Badge>
         </div>
 
         <dl className="grid gap-1.5 text-sm font-medium text-fg-2 sm:grid-cols-2">
@@ -187,6 +187,12 @@ function BookingCard({ booking, now, onCancel }: { booking: Booking; now: number
           <p className="text-sm font-semibold text-fg-muted">
             {t.booking.totalToPay}: <span className="text-base font-bold text-fg">{formatVnd(booking.totalAmount, intlLocale)}</span>
           </p>
+          {booking.tickets.length > 0 && (
+            <Link href={ROUTES.myTicket(booking.id)} className={buttonClasses({ variant: "outline", size: "sm" })}>
+              <Ticket aria-hidden className="size-4" />
+              {t.account.tickets.viewTickets(booking.tickets.length)}
+            </Link>
+          )}
           {status === "PENDING" && (
             <div className="flex flex-wrap items-center gap-3">
               {booking.expiresAt && (

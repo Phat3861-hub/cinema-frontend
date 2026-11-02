@@ -120,8 +120,8 @@ API: ✅ đã có · ⏳ backend chưa làm (dựng UI với dữ liệu giả /
 | bước **Bắp nước** | Food & Drink `4236:32292` | ✅ `/products`, `PUT /bookings/{id}/items` | Giữ bố cục lưới + stepper số lượng; nút "Bỏ qua". Không có sản phẩm → tự bỏ qua bước |
 | bước **Thanh toán** | Payment `4236:35621`, Loading `4236:35870` | ⏳ payment | Phương thức VNPay / MoMo / Stripe (sandbox), ô voucher (1 voucher/đơn), tóm tắt đơn (ghế, bắp nước, giảm giá, tổng). Gửi `Idempotency-Key`; chuyển hướng sang cổng → trang chờ kết quả |
 | bước **Vé** / `/booking/[id]/result` | Check out `4236:35940` | ⏳ booking | "Thanh toán thành công": mã đặt vé + **QR code** (thay barcode), phim, rạp, **phòng**, ngày giờ, ghế, bắp nước, tổng VND; thông tin khách lấy từ `/auth/me` (họ tên, email, SĐT). Nút "Tải vé" (PDF/ảnh), "Vé của tôi". Thất bại / hết hạn giữ ghế → màn lỗi + quay lại chọn ghế |
-| `/my-tickets` | Profile/Manage Tickets `4281:26337` | ✅ `/bookings/me`; ⏳ vé/QR | Sidebar tài khoản (dưới). "Sắp tới" / "Đã xem" (+ "Đã hủy / hoàn tiền"); dòng: poster, tên phim, ngày giờ, rạp, số vé + ghế, badge trạng thái, "Chi tiết" |
-| `/my-tickets/[bookingId]` | Profile/Manage Tickets/Ticket `4281:26485` | ⏳ | Vé có QR, nút yêu cầu hoàn tiền (`REFUND_REQUEST`, theo điều kiện docs backend §5.4) |
+| `/my-tickets` | Profile/Manage Tickets `4281:26337` | ✅ `/bookings/me` | Sidebar tài khoản (dưới). "Sắp tới" / "Đã xem" (+ "Đã hủy / hoàn tiền"); dòng: poster, tên phim, ngày giờ, rạp, số vé + ghế, badge trạng thái, "Chi tiết" |
+| `/my-tickets/[bookingId]` | Profile/Manage Tickets/Ticket `4281:26485` | ✅ `/bookings/{id}` (vé + QR, in vé); ⏳ hoàn tiền | Vé có QR, nút yêu cầu hoàn tiền (`REFUND_REQUEST`, theo điều kiện docs backend §5.4) |
 | `/account` | Profile/Dashboard `4281:27425` + form Setting BankDash | ✅ `/auth/me`; ⏳ cập nhật hồ sơ (AUTH-07) | Thông tin tài khoản; tab **Đổi mật khẩu** (✅ `POST /auth/change-password`) và **Đăng xuất mọi thiết bị** (✅ `POST /auth/logout-all`) |
 
 **Sidebar tài khoản** (Profile): Tài khoản · Vé của tôi · Điểm thưởng (⏳ PRO-02, ẩn tới khi có) · Đăng xuất.
@@ -149,9 +149,9 @@ Backend vẫn là nơi kiểm tra thật (CLAUDE.md §6). Mục ⏳ có thể d�
 | Nhóm | Mục | Route | Quyền (một trong) | API |
 |---|---|---|---|---|
 | Tổng quan | Dashboard | `/admin` | `REPORT_VIEW_ALL`, `REPORT_VIEW_CINEMA` (không có → trang chào + lối tắt) | ⏳ SYS-03 |
-| Quầy vé | Bán vé tại quầy (POS) | `/admin/pos` | `BOOKING_COUNTER_SELL` | ⏳ BOK-09 |
+| Quầy vé | Bán vé tại quầy (POS) | `/admin/pos` | `BOOKING_COUNTER_SELL` | ✅ BOK-09 (tiền mặt) |
 | | Check-in QR | `/admin/check-in` | `TICKET_CHECKIN` | ⏳ BOK-10 |
-| | Đặt vé | `/admin/bookings` | `BOOKING_VIEW_CINEMA`, `BOOKING_VIEW_ALL` | ⏳ |
+| | Đặt vé | `/admin/bookings` | `BOOKING_VIEW_CINEMA`, `BOOKING_VIEW_ALL` | ✅ |
 | | Hoàn tiền | `/admin/refunds` | `REFUND_APPROVE` | ⏳ PAY-03 |
 | Nội dung | Phim | `/admin/movies`, `/new`, `/[movieId]` | `MOVIE_MANAGE` | ✅ |
 | | Thể loại | `/admin/genres` | `GENRE_MANAGE` | ✅ |
