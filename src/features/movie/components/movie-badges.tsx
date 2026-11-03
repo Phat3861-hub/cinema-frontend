@@ -35,14 +35,16 @@ export function MovieStatusBadge({ status }: { status: MovieStatus }) {
   return <Badge tone={STATUS_TONES[status]}>{t.movie.status[status]}</Badge>;
 }
 
-/** 1–5 stars average; hidden when there is no rating yet. */
-export function Rating({ value }: { value: number | null }) {
+/** 1–5 stars average, optionally with the review count; hidden when there is no rating yet. */
+export function Rating({ value, count }: { value: number | null; count?: number }) {
   const t = useT();
   if (value === null) return null;
   return (
-    <span className="inline-flex items-center gap-1 text-sm font-semibold text-fg" aria-label={t.movie.ratingLabel(Number(value))}>
+    <span className="inline-flex items-center gap-1 text-sm font-semibold text-fg">
       <Star aria-hidden className="size-4 fill-primary text-primary" />
-      {Number(value).toFixed(1)}
+      <span className="sr-only">{t.movie.ratingLabel(Number(value))}</span>
+      <span aria-hidden>{Number(value).toFixed(1)}</span>
+      {count !== undefined && <span className="font-medium text-fg-muted">· {t.reviews.count(count)}</span>}
     </span>
   );
 }

@@ -7,6 +7,7 @@ import { CoverImage } from "@/components/ui/cover-image";
 import { ErrorState, Skeleton } from "@/components/ui/states";
 import { movieApi } from "@/features/movie/api";
 import { AgeBadge, MovieStatusBadge, Rating } from "@/features/movie/components/movie-badges";
+import { MovieReviews } from "@/features/movie/components/movie-reviews";
 import { genreLabel, splitCast, youtubeEmbedUrl } from "@/features/movie/labels";
 import type { Movie } from "@/features/movie/types";
 import { MovieShowtimes } from "@/features/showtime/components/movie-showtimes";
@@ -16,9 +17,9 @@ import { ApiError } from "@/lib/api-client";
 import { formatDate } from "@/lib/format";
 import { notFound } from "next/navigation";
 
-/** Ticketor Movie Details: poster + trailer hero, synopsis, crew, cast chips, then showtimes by cinema. */
+/** Ticketor Movie Details: poster + trailer hero, synopsis, crew, cast chips, showtimes by cinema, then reviews. */
 export function MovieDetailScreen({ slug }: { slug: string }) {
-  const { data: movie, error, loading, reload } = useApi(`movie:${slug}`, () => movieApi.bySlug(slug));
+  const { data: movie, error, loading, reload, setData } = useApi(`movie:${slug}`, () => movieApi.bySlug(slug));
 
   if (error instanceof ApiError && error.code === "MOVIE_NOT_FOUND") notFound();
   if (error && !movie) return <ErrorState error={error} onRetry={reload} />;
@@ -30,6 +31,12 @@ export function MovieDetailScreen({ slug }: { slug: string }) {
       <section id="showtimes" className="mx-auto w-full max-w-[1232px] scroll-mt-24 px-4">
         <MovieShowtimes movie={movie} />
       </section>
+      <MovieReviews
+        movie={movie}
+        onRatingChange={(summary) =>
+          setData((current) => current && { ...current, avgRating: summary.average, ratingCount: summary.count })
+        }
+      />
     </div>
   );
 }
@@ -71,7 +78,11 @@ function Hero({ movie }: { movie: Movie }) {
             <div className="flex flex-wrap items-center gap-2">
               <MovieStatusBadge status={movie.status} />
               <AgeBadge rating={movie.ageRating} withLabel />
-              <Rating value={movie.avgRating} />
+              {movie.avgRating !== null && (
+                <a href="#reviews" className="rounded hover:underline focus-visible:outline-2 focus-visible:outline-accent">
+                  <Rating value={movie.avgRating} count={movie.ratingCount} />
+                </a>
+              )}
             </div>
             <h1 id="movie-title" className="text-h4 sm:text-5xl sm:leading-tight sm:font-bold">
               {movie.title}
