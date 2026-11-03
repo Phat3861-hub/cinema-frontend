@@ -225,7 +225,10 @@ function BookingFlow({
     if (unchanged) return setStep("payment");
     setBusy("items");
     try {
-      setBooking(await bookingApi.replaceItems(booking.id, items));
+      const updated = await bookingApi.replaceItems(booking.id, items);
+      // The backend drops a voucher whose minimum the new order no longer reaches
+      if (booking.voucher && !updated.voucher) toast.error(t.promotion.removedMinOrder(booking.voucher.code));
+      setBooking(updated);
       setStep("payment");
     } catch (error) {
       failOnBooking(error);
@@ -324,7 +327,9 @@ function BookingFlow({
             onChange={(productId, quantity) => setQuantities((q) => ({ ...q, [productId]: quantity }))}
           />
         )}
-        {step === "payment" && booking && <PaymentStep booking={booking} />}
+        {step === "payment" && booking && (
+          <PaymentStep booking={booking} onBookingChange={setBooking} onBookingError={failOnBooking} disabled={busyAny} />
+        )}
 
         <BookingSummary
           showtime={showtime}

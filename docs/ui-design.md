@@ -118,7 +118,7 @@ API: ✅ đã có · ⏳ backend chưa làm (dựng UI với dữ liệu giả /
 | `/cinemas/[slug]` | (mới) | ✅ `/cinemas/slug/{slug}`; ⏳ showtimes | Thông tin rạp + lịch chiếu theo ngày của rạp |
 | `/booking/[showtimeId]` bước **Ghế** | Seat Selection `4235:27274` | ✅ seats, `POST /bookings`, WebSocket | Thanh bước: **Ghế → Bắp nước → Thanh toán → Vé**. Lưới ghế dựng từ layout (hàng A..; `.` = lối đi; **ghế đôi chiếm 2 ô** và chọn cả cặp). **Bỏ Adult / Senior / Child** – backend không có loại vé; giá ghế = giá suất + phụ thu loại ghế. Chú thích: Trống · Đang chọn (`primary`) · Đã bán / đang giữ (`primary-900`) · Không bán (`neutral-600`); loại ghế Thường / VIP / Đôi phân biệt bằng viền màu `seatType.color` + chú thích. Cột phải: danh sách ghế đã chọn + giá từng ghế, tổng tiền VND, nút "Tiếp tục" → giữ ghế 10 phút (**đồng hồ đếm ngược** hiện ở mọi bước sau); lỗi `SEAT_NOT_AVAILABLE` → bỏ ghế đó + toast. Trạng thái ghế realtime qua STOMP (CLAUDE.md §5) |
 | bước **Bắp nước** | Food & Drink `4236:32292` | ✅ `/products`, `PUT /bookings/{id}/items` | Giữ bố cục lưới + stepper số lượng; nút "Bỏ qua". Không có sản phẩm → tự bỏ qua bước |
-| bước **Thanh toán** | Payment `4236:35621`, Loading `4236:35870` | ⏳ payment | Phương thức VNPay / MoMo / Stripe (sandbox), ô voucher (1 voucher/đơn), tóm tắt đơn (ghế, bắp nước, giảm giá, tổng). Gửi `Idempotency-Key`; chuyển hướng sang cổng → trang chờ kết quả |
+| bước **Thanh toán** | Payment `4236:35621`, Loading `4236:35870` | ✅ voucher; ⏳ payment | Phương thức VNPay / MoMo / Stripe (sandbox), ô voucher (1 voucher/đơn), tóm tắt đơn (ghế, bắp nước, giảm giá, tổng). Gửi `Idempotency-Key`; chuyển hướng sang cổng → trang chờ kết quả |
 | bước **Vé** / `/booking/[id]/result` | Check out `4236:35940` | ⏳ booking | "Thanh toán thành công": mã đặt vé + **QR code** (thay barcode), phim, rạp, **phòng**, ngày giờ, ghế, bắp nước, tổng VND; thông tin khách lấy từ `/auth/me` (họ tên, email, SĐT). Nút "Tải vé" (PDF/ảnh), "Vé của tôi". Thất bại / hết hạn giữ ghế → màn lỗi + quay lại chọn ghế |
 | `/my-tickets` | Profile/Manage Tickets `4281:26337` | ✅ `/bookings/me` | Sidebar tài khoản (dưới). "Sắp tới" / "Đã xem" (+ "Đã hủy / hoàn tiền"); dòng: poster, tên phim, ngày giờ, rạp, số vé + ghế, badge trạng thái, "Chi tiết" |
 | `/my-tickets/[bookingId]` | Profile/Manage Tickets/Ticket `4281:26485` | ✅ `/bookings/{id}` (vé + QR, in vé); ⏳ hoàn tiền | Vé có QR, nút yêu cầu hoàn tiền (`REFUND_REQUEST`, theo điều kiện docs backend §5.4) |
@@ -163,7 +163,7 @@ Backend vẫn là nơi kiểm tra thật (CLAUDE.md §6). Mục ⏳ có thể d�
 | | Loại ghế & phụ thu | `/admin/seat-types` | `CINEMA_MANAGE` | ✅ |
 | | Suất chiếu | `/admin/showtimes` | `SHOWTIME_MANAGE` (giá: `PRICE_MANAGE`) | ⏳ SHO-01..03 |
 | | Nhân viên rạp | `/admin/cinemas/[cinemaId]/staff` | `STAFF_ASSIGN` | ✅ |
-| Kinh doanh | Voucher | `/admin/vouchers` | `VOUCHER_MANAGE_GLOBAL`, `VOUCHER_MANAGE_CINEMA` | ⏳ PRO-01 |
+| Kinh doanh | Voucher | `/admin/vouchers` | `VOUCHER_MANAGE_GLOBAL`, `VOUCHER_MANAGE_CINEMA` | ✅ |
 | | Bắp nước | `/admin/products` | `PRODUCT_MANAGE` | ✅ |
 | | Báo cáo | `/admin/reports` | `REPORT_VIEW_ALL`, `REPORT_VIEW_CINEMA` | ⏳ |
 | Hệ thống | Người dùng | `/admin/users`, `/[userId]` | `USER_MANAGE` | ✅ chi tiết / khóa / role; ⏳ **danh sách** |

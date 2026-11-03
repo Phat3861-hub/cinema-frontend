@@ -100,6 +100,12 @@ export function BookingTickets({ bookingId }: { bookingId: number }) {
         </div>
       )}
 
+      {Number(data.discountAmount) > 0 && (
+        <p className="flex justify-between gap-4 text-sm font-medium text-success">
+          <span>{data.voucher ? t.promotion.discountLine(data.voucher.code) : t.booking.discount}</span>
+          <span>−{formatVnd(data.discountAmount, intlLocale)}</span>
+        </p>
+      )}
       <div className="flex items-center justify-between border-t border-line pt-4">
         <span className="text-sm font-semibold text-fg-muted">{t.booking.totalToPay}</span>
         <span className="text-xl font-bold">{formatVnd(data.totalAmount, intlLocale)}</span>

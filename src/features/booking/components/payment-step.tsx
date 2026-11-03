@@ -2,15 +2,28 @@
 
 import { CreditCard } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
+import { VoucherBox } from "@/features/booking/components/voucher-box";
 import type { Booking } from "@/features/booking/types";
 import { useLocale, useT } from "@/i18n";
 import { formatTime, formatVnd } from "@/lib/format";
 
 /**
- * Review of the held booking before paying. Online payment (VNPay) comes with the payment module, so this step
- * only shows the order and when the hold ends.
+ * Review of the held booking before paying, with its voucher. Online payment (VNPay) comes with the payment module,
+ * so this step only shows the order and when the hold ends.
  */
-export function PaymentStep({ booking }: { booking: Booking }) {
+export function PaymentStep({
+  booking,
+  onBookingChange,
+  onBookingError,
+  disabled = false,
+}: {
+  booking: Booking;
+  onBookingChange: (booking: Booking) => void;
+  onBookingError: (error: unknown) => void;
+  disabled?: boolean;
+}) {
+  const discount = Number(booking.discountAmount);
+
   const t = useT();
   const { intlLocale } = useLocale();
 
@@ -63,6 +76,22 @@ export function PaymentStep({ booking }: { booking: Booking }) {
           ))}
         </tbody>
         <tfoot>
+          {discount > 0 && (
+            <>
+              <tr>
+                <th scope="row" colSpan={2} className="pt-4 pr-3 text-left text-sm font-semibold text-fg-muted">
+                  {t.booking.subtotal}
+                </th>
+                <td className="pt-4 text-right font-semibold">{formatVnd(booking.subtotal, intlLocale)}</td>
+              </tr>
+              <tr>
+                <th scope="row" colSpan={2} className="pt-2 pr-3 text-left text-sm font-semibold text-success">
+                  {booking.voucher ? t.promotion.discountLine(booking.voucher.code) : t.booking.discount}
+                </th>
+                <td className="pt-2 text-right font-semibold text-success">−{formatVnd(discount, intlLocale)}</td>
+              </tr>
+            </>
+          )}
           <tr>
             <th scope="row" colSpan={2} className="pt-4 pr-3 text-left text-sm font-semibold text-fg-muted">
               {t.booking.totalToPay}
@@ -71,6 +100,8 @@ export function PaymentStep({ booking }: { booking: Booking }) {
           </tr>
         </tfoot>
       </table>
+
+      <VoucherBox booking={booking} onChange={onBookingChange} onBookingError={onBookingError} disabled={disabled} />
 
       <div className="flex items-center gap-3 rounded-xl border border-dashed border-line-strong p-4 text-sm font-medium text-fg-muted">
         <CreditCard aria-hidden className="size-6 shrink-0" />

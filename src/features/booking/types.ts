@@ -1,4 +1,5 @@
 import type { SeatTypeCode } from "@/features/cinema/types";
+import type { VoucherSummary } from "@/features/promotion/types";
 import type { Showtime } from "@/features/showtime/types";
 
 /** Mirrors com.pnt.cinema.modules.booking DTOs. Money is VND; instants are ISO UTC. */
@@ -92,6 +93,8 @@ export interface Booking {
   customer: BookingCustomer | null;
   /** Staff member of a counter sale (null online). */
   soldBy: BookingSeller | null;
+  /** Voucher applied (its discount is `discountAmount`); null = none. */
+  voucher: VoucherSummary | null;
   subtotal: number;
   discountAmount: number;
   totalAmount: number;
@@ -112,7 +115,7 @@ export interface BookingItemInput {
   quantity: number;
 }
 
-/** BOK-09: cash sale at the counter, confirmed at once. Customer details are optional. */
+/** BOK-09: cash sale at the counter, confirmed at once. Customer details and voucher are optional. */
 export interface CounterBookingRequest {
   showtimeId: number;
   seatIds: number[];
@@ -120,6 +123,15 @@ export interface CounterBookingRequest {
   customerName?: string;
   customerEmail?: string;
   customerPhone?: string;
+  voucherCode?: string;
+}
+
+/** Voucher check at the counter: the order subtotal on the till and the customer email typed in. */
+export interface CounterVoucherQuoteRequest {
+  showtimeId: number;
+  code: string;
+  subtotal: number;
+  customerEmail?: string;
 }
 
 /** Days are showtime days (Vietnam); `code` / `showtimeId` replace the date range. */

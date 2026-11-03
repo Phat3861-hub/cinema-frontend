@@ -35,6 +35,11 @@ export function PosReceipt({ booking, received, onNext }: { booking: Booking; re
             {t.booking.bookingCode}: <span className="font-mono text-base font-bold text-fg">{booking.bookingCode}</span>
             {booking.customer?.userId != null && ` · ${t.admin.pos.linkedToAccount}`}
           </p>
+          {booking.voucher && (
+            <p className="text-sm font-semibold text-success">
+              {t.promotion.discountLine(booking.voucher.code)}: −{formatVnd(booking.discountAmount, intlLocale)}
+            </p>
+          )}
         </div>
       </div>
 
