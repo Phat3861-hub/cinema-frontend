@@ -11,19 +11,33 @@ import { AgeBadge, Rating } from "@/features/movie/components/movie-badges";
 import { MovieCard, MovieCardSkeleton, MovieGrid } from "@/features/movie/components/movie-card";
 import { genreLabel } from "@/features/movie/labels";
 import type { MovieStatus, MovieSummary } from "@/features/movie/types";
+import { bannerApi, voucherApi } from "@/features/promotion/api";
+import { BannerCarousel } from "@/features/promotion/components/banner-carousel";
+import { OfferCard, OfferCardSkeleton } from "@/features/promotion/components/offer-card";
 import { useApi } from "@/hooks/use-api";
 import { useT } from "@/i18n";
 import type { PageResponse } from "@/types/api";
 
 const SECTION = "mx-auto w-full max-w-[1232px] px-4";
 
+const HOME_OFFERS = 4;
+
 /** Ticketor Home: hero, now showing, coming soon, offers, FAQ (stats / partners / app blocks dropped). */
 export function HomeScreen() {
   const nowShowing = useApi("home:now", () => movieApi.search({ status: "NOW_SHOWING", size: 10, sort: "releaseDate,desc" }));
+  const banners = useApi("home:banners", () => bannerApi.listShowing());
+  // A failed banner load falls back to the featured movie hero
+  const bannersSettled = banners.data !== undefined || banners.error !== undefined;
 
   return (
     <div className="flex flex-col gap-16 pb-8">
-      <Hero movie={nowShowing.data?.content[0]} loading={nowShowing.loading && !nowShowing.data} />
+      {banners.data && banners.data.length > 0 ? (
+        <div className={SECTION}>
+          <BannerCarousel banners={banners.data} />
+        </div>
+      ) : (
+        <Hero movie={nowShowing.data?.content[0]} loading={!bannersSettled || (nowShowing.loading && !nowShowing.data)} />
+      )}
       <MovieSection status="NOW_SHOWING" result={nowShowing} />
       <ComingSoonSection />
       <Offers />
@@ -159,33 +173,60 @@ function ComingSoonSection() {
   return <MovieSection status="COMING_SOON" result={result} />;
 }
 
+/** Public vouchers when there are any, otherwise the two standing promotions. */
 function Offers() {
   const t = useT();
-  const offers = [
+  const offers = useApi("home:offers", () => voucherApi.listPublic());
+  const vouchers = offers.data?.slice(0, HOME_OFFERS) ?? [];
+  const standing = [
     { icon: Gift, title: t.home.offer1Title, text: t.home.offer1Text },
     { icon: Popcorn, title: t.home.offer2Title, text: t.home.offer2Text },
   ];
   return (
     <section className={SECTION} aria-labelledby="offers-title">
-      <h2 id="offers-title" className="text-h6 mb-6">
-        {t.home.offers}
-      </h2>
-      <div className="grid gap-4 md:grid-cols-2">
-        {offers.map(({ icon: Icon, title, text }) => (
-          <article
-            key={title}
-            className="flex gap-5 rounded-2xl border border-line bg-surface p-6 transition-colors hover:border-accent/50"
+      <div className="mb-6 flex items-end justify-between gap-4">
+        <h2 id="offers-title" className="text-h6">
+          {t.home.offers}
+        </h2>
+        {vouchers.length > 0 && (
+          <Link
+            href={ROUTES.offers}
+            className="inline-flex items-center gap-1 rounded text-sm font-bold text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent"
           >
-            <div className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-primary text-black">
-              <Icon aria-hidden className="size-7" />
-            </div>
-            <div className="flex flex-col gap-2">
-              <h3 className="text-h8">{title}</h3>
-              <p className="text-sm font-medium text-fg-muted">{text}</p>
-            </div>
-          </article>
-        ))}
+            {t.common.seeAll}
+            <ArrowRight aria-hidden className="size-4" />
+          </Link>
+        )}
       </div>
+      {offers.loading && !offers.data ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          <OfferCardSkeleton />
+          <OfferCardSkeleton />
+        </div>
+      ) : vouchers.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          {vouchers.map((offer) => (
+            <OfferCard key={offer.code} offer={offer} />
+          ))}
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {standing.map(({ icon: Icon, title, text }) => (
+            <article
+              key={title}
+              className="flex gap-5 rounded-2xl border border-line bg-surface p-6 transition-colors hover:border-accent/50"
+            >
+              <div className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-primary text-black">
+                <Icon aria-hidden className="size-7" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <h3 className="text-h8">{title}</h3>
+                <p className="text-sm font-medium text-fg-muted">{text}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

@@ -232,7 +232,10 @@ function Vouchers({ canGlobal, cinema, cinemas }: { canGlobal: boolean; cinema: 
                 {content.map((voucher) => (
                   <tr key={voucher.id}>
                     <Td>
-                      <p className="font-mono font-bold text-fg">{voucher.code}</p>
+                      <p className="flex items-center gap-2 font-mono font-bold text-fg">
+                        {voucher.code}
+                        {voucher.publicOffer && <Badge tone="accent">{t.admin.vouchers.publicBadge}</Badge>}
+                      </p>
                       <p className="line-clamp-1 max-w-56 text-xs text-fg-muted">{voucher.name}</p>
                     </Td>
                     <Td>
@@ -422,6 +425,7 @@ function VoucherDialog({
   });
   const [type, setType] = useState<DiscountType>(voucher?.discountType ?? "PERCENT");
   const [active, setActive] = useState(voucher ? voucher.status === "ACTIVE" : true);
+  const [publicOffer, setPublicOffer] = useState(voucher?.publicOffer ?? false);
   const [errors, setErrors] = useState<Errors<Field>>({});
   const [formError, setFormError] = useState<unknown>(null);
   const [saving, setSaving] = useState(false);
@@ -492,6 +496,7 @@ function VoucherDialog({
       startAt,
       endAt,
       status: active ? "ACTIVE" : "INACTIVE",
+      publicOffer,
     };
     try {
       if (voucher) await voucherApi.update(voucher.id, body);
@@ -696,6 +701,13 @@ function VoucherDialog({
           description={t.admin.vouchers.activeHint}
           checked={active}
           onChange={(event) => setActive(event.target.checked)}
+        />
+        <Checkbox
+          className="sm:col-span-2"
+          label={t.admin.vouchers.publicOffer}
+          description={t.admin.vouchers.publicOfferHint}
+          checked={publicOffer}
+          onChange={(event) => setPublicOffer(event.target.checked)}
         />
         {preview && (
           <p className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 text-sm font-semibold text-fg sm:col-span-2">

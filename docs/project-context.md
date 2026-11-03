@@ -4,12 +4,20 @@
 > Cập nhật theo skill `/update-context` (rule CLAUDE.md §0). Ghi **trạng thái hiện tại**, không chép lại code hay git log.
 > Trạng thái backend / API đã sẵn sàng: `../cinema-backend/docs/project-context.md` (mục 4).
 >
-> **Cập nhật lần cuối:** 2026-11-02 (voucher: quản lý admin, áp mã online + POS; nhánh `feature/voucher-ui`)
+> **Cập nhật lần cuối:** 2026-11-02 (banner trang chủ + trang Ưu đãi; nhánh `feature/banner-offers-ui`)
 
 ## 1. Trạng thái hiện tại
 - `feature/auth-ui`, `feature/ui-modules` (PR #2), `feature/booking-ui` (PR #3) đã merge. `feature/booking-counter-ui` (POS, đơn đặt vé
-  theo rạp, vé QR) đã commit, chờ PR. Nhánh **`feature/voucher-ui`** (tách từ `feature/booking-counter-ui`), **chưa commit**: voucher
-  (backend `feature/voucher`). Lint / typecheck / build xanh.
+  theo rạp, vé QR) đã commit, chờ PR; `feature/voucher-ui` đã commit + push. Nhánh **`feature/banner-offers-ui`** (tách từ
+  `feature/voucher-ui`), **chưa commit**: banner + Ưu đãi (backend `feature/banner-offers`). Lint / typecheck / build xanh.
+- **Banner** (`features/promotion/components/admin-banners-screen.tsx`, `/admin/banners`, `BANNER_MANAGE`): bảng thumbnail 8:3, lọc trạng
+  thái, tìm; **↑/↓** gửi `PUT /banners/order` với đủ mọi id (chỉ hiện khi "Tất cả" + không có từ khóa), ẩn / hiện, xóa (xác nhận);
+  hộp thêm/sửa: ảnh URL https + xem trước 8:3 có chữ, liên kết Không / Trang phim / Đường dẫn, thời gian giờ VN, bật hiển thị.
+  Trang chủ: `BannerCarousel` (tự chuyển 6 s; dừng khi hover / focus / nút tạm dừng / `prefers-reduced-motion`; nút ←/→ + chấm có nhãn;
+  slide ẩn dùng `inert`; h1 ẩn `sr-only`); không có banner hoặc lỗi ⇒ hero phim nổi bật như cũ.
+- **Ưu đãi**: `OfferCard` (thẻ dạng vé: mức giảm, tối thiểu / trần, rạp, phim, hạn; Sao chép mã → toast; Đặt vé → trang phim hoặc `/movies`),
+  trang `/offers` (`offers-screen.tsx`) + khu "Ưu đãi" trang chủ (≤ 4 voucher + "Xem tất cả", không có ⇒ 2 card tĩnh); link ở header + footer.
+  Hộp voucher admin có ô "Hiển thị ở trang Ưu đãi" (`publicOffer`), danh sách có badge "Công khai".
 - **Voucher** (`features/promotion/`): `/admin/vouchers` (`VOUCHER_MANAGE_GLOBAL` / `_CINEMA`) – lọc trạng thái (Segmented), phạm vi
   (người global: tất cả / toàn hệ thống / rạp đang chọn; người theo rạp: rạp ở topbar), tìm mã/tên; bảng có thanh lượt dùng, tạm dừng /
   bật lại, xóa chỉ khi chưa dùng; hộp thêm/sửa (loại % / số tiền, trần, tối thiểu, lượt, rạp, phim, thời gian giờ VN, dòng xem trước;
@@ -38,7 +46,7 @@
 - `components/ui`: button, field, text/select/textarea/password field, alert, badge, dialog (+ConfirmDialog, `<dialog>` native),
   states (skeleton/loading/empty/error), pagination, tabs/segmented, toast, card, checkbox, table, menu, drawer, cover-image.
   Hooks: `use-api` (giữ data cũ khi đổi key), `use-url-filters` (cần Suspense), `use-theme`, `use-now` (giờ hiện tại cho render).
-- **Khách hàng**: trang chủ (hero phim nổi bật, đang/sắp chiếu, ưu đãi, FAQ), danh sách phim (lọc/tìm/sắp xếp/phân trang theo URL),
+- **Khách hàng**: trang chủ (carousel banner / hero phim nổi bật, đang/sắp chiếu, ưu đãi, FAQ), trang Ưu đãi, danh sách phim (lọc/tìm/sắp xếp/phân trang theo URL),
   chi tiết phim + lịch chiếu theo ngày/thành phố/định dạng, danh sách rạp (thành phố, gần tôi), chi tiết rạp + lịch,
   **đặt vé** `features/booking/components/booking-screen.tsx`: Ghế → Bắp nước → Thanh toán (→ Vé). Chọn ghế (tối đa 8,
   ghế đôi theo cặp) cập nhật trực tiếp; ghế đang chọn bị người khác lấy → bỏ khỏi lựa chọn + toast. "Tiếp tục" = `POST /bookings`
@@ -55,7 +63,7 @@
   loại ghế, suất chiếu (theo ngày, tạo 1 / hàng loạt, sửa, hủy, khóa ghế theo suất, hiển thị slot trùng), nhân sự rạp,
   người dùng (tra theo ID → khóa/mở, gán/gỡ role), **vai trò & quyền** (ma trận theo module, ADMIN chỉ xem, hộp xác nhận
   thêm/bỏ, chế độ so sánh), **bắp nước** (`/admin/products`, PRODUCT_MANAGE: lọc theo loại, thêm/sửa/ngừng bán, xóa bị chặn
-  khi đã có trong đơn), POS, đơn đặt vé, **voucher**. Các mục chưa có API (check-in, hoàn tiền, banner, đánh giá, báo cáo,
+  khi đã có trong đơn), POS, đơn đặt vé, **voucher**, **banner**. Các mục chưa có API (check-in, hoàn tiền, đánh giá, báo cáo,
   audit log) là trang "Sắp có".
 
 ## 2. Môi trường dev
@@ -69,8 +77,8 @@
 | Nhóm | Route | Trạng thái |
 |---|---|---|
 | Auth | `/login`, `/register`, `/register/check-email`, `/verify-email`, `/forgot-password`, `/reset-password` | Xong, i18n |
-| Khách hàng | `/`, `/movies`, `/movies/[slug]`, `/cinemas`, `/cinemas/[slug]`, `/booking/[showtimeId]`, `/account`, `/my-tickets`, `/my-tickets/[bookingId]` | Xong với API hiện có; booking dừng ở bước thanh toán (chờ VNPay) |
-| Admin nội dung | `/admin/movies(/new,/[id])`, `/admin/genres` | Xong |
+| Khách hàng | `/`, `/offers`, `/movies`, `/movies/[slug]`, `/cinemas`, `/cinemas/[slug]`, `/booking/[showtimeId]`, `/account`, `/my-tickets`, `/my-tickets/[bookingId]` | Xong với API hiện có; booking dừng ở bước thanh toán (chờ VNPay) |
+| Admin nội dung | `/admin/movies(/new,/[id])`, `/admin/genres`, `/admin/banners` | Xong |
 | Admin quầy vé | `/admin/pos`, `/admin/bookings` | Xong (chỉ tiền mặt) |
 | Admin kinh doanh | `/admin/products`, `/admin/vouchers` | Xong |
 | Admin rạp | `/admin/cinemas(/new,/[id])`, `/admin/cinemas/[id]/rooms\|staff\|showtimes`, `/admin/rooms/[id]/layout`, `/admin/seat-types`; `/admin/rooms\|staff\|showtimes` chuyển tới rạp đang chọn | Xong |
@@ -88,16 +96,21 @@ ngay, ghế đang chọn bị bán → bỏ + **1** toast); customer3 xem vé QR
 Đã test trên Chrome 2026-11-02 (voucher): CONTENT_MANAGER tạo voucher % (toàn hệ thống) + số tiền (rạp Hà Đông); manager2 chỉ thấy voucher
 rạp mình; customer1 áp mã sai (lỗi dưới ô) → áp MIN300 → bớt bắp nước ⇒ tự gỡ + toast → áp GIAM20 → hủy đơn ⇒ trả lượt; staff2 POS áp
 HADONG30, thu tiền 190.000 (đã trừ), biên nhận + chi tiết đơn admin có dòng voucher. Chưa test: light/dark + en của màn voucher, voucher theo phim.
+Đã test trên Chrome 2026-11-02 (banner + ưu đãi): staff2 mở `/admin/banners` → "Không có quyền"; CONTENT_MANAGER tạo banner (lỗi URL http,
+thiếu tiêu đề, thiếu phim) → xem trước → lưu, ↑/↓ đổi thứ tự, lọc "Sắp hiển thị", ẩn ⇒ trang chủ bớt banner; bật "Hiển thị ở trang Ưu đãi"
+cho GIAM20; trang chủ carousel 2 banner (banner sắp hiển thị không hiện), khu Ưu đãi + `/offers`, Sao chép mã, light/dark, vi/en.
+Sửa sau test: nút ← đè chữ banner, số tiền "30.000 ₫" bị bẻ dòng trong thẻ ưu đãi. Chưa test: link ngoài (tab mới), giảm chuyển động.
 Chưa kiểm tra được giao diện mobile bằng Chrome (cửa sổ không resize).
 
 ## 4. Bước tiếp theo
-1. Chủ dự án review + commit nhánh `feature/voucher-ui` (lệnh PowerShell, không trailer Claude); PR `feature/booking-counter-ui` trước.
-2. Trang "Ưu đãi" cho khách (thay 2 card tĩnh ở trang chủ) – chờ backend API voucher public.
+1. Chủ dự án review + commit nhánh `feature/banner-offers-ui` (lệnh PowerShell, không trailer Claude); thứ tự PR:
+   `feature/booking-counter-ui` → `feature/voucher-ui` → `feature/banner-offers-ui`.
+2. Upload ảnh banner khi backend có S3/MinIO (AUTH-07); hiện nhập URL https.
 3. **(Tạm hoãn)** Backend PR 3 (`feature/payment-vnpay`): bật nút Thanh toán, trang chờ kết quả + bước Vé (dùng `TicketCard`), POS thêm
    VNPay QR. Sau đó check-in QR (`/admin/check-in`), hoàn tiền.
 4. Tab Đặt vé trong chi tiết user (`/admin/users/[id]`, đang "Sắp có") – cần backend API booking theo user.
 5. Kiểm tra giao diện mobile (DevTools device mode) cho header/drawer, sidebar admin, bảng suất chiếu, trình thiết kế ghế, luồng đặt vé.
-6. Khi backend có API: danh sách user phân trang (thay màn tra theo ID), báo cáo, banner, đánh giá, audit log.
+6. Khi backend có API: danh sách user phân trang (thay màn tra theo ID), báo cáo, đánh giá, audit log.
 7. Backend trả mô tả role bằng tiếng Anh (`description`) → cần dịch theo `code` hoặc backend thêm bản vi.
 
 ## 5. Quyết định thiết kế
@@ -116,6 +129,8 @@ Chưa kiểm tra được giao diện mobile bằng Chrome (cửa sổ không re
 | 2026-11-02 | POS chỉ thu tiền mặt, máy tính tiền thối ở client (không gửi số tiền khách đưa lên backend) | Chủ dự án: VNPay làm sau; backend chưa có `payments` |
 | 2026-11-02 | In vé bằng portal dưới `body` + `@media print`, không mở cửa sổ mới | Không bị chặn popup, in được cả từ trong `<dialog>`; dùng chung cho POS, đơn đặt vé, vé của khách |
 | 2026-11-02 | POS dùng endpoint **voucher-quote** rồi tự tính giảm giá ở client khi giỏ đổi; bán gửi `voucherCode` để backend kiểm tra lại | Thu ngân thấy số phải thu trước khi nhận tiền mặt, không giữ lượt của mã khi khách đổi ý |
+| 2026-11-02 | Carousel banner tự chuyển nhưng có nút tạm dừng, dừng khi hover / focus và tắt hẳn với `prefers-reduced-motion` | WCAG 2.2.2 (nội dung tự chuyển > 5 s phải dừng được) |
+| 2026-11-02 | Khu "Ưu đãi" trang chủ: không có voucher công khai ⇒ giữ 2 card tĩnh; banner lỗi / trống ⇒ hero phim nổi bật | Trang chủ không bao giờ trống khi chưa có nội dung |
 | 2026-10-30 | Validation client lặp lại rule DTO backend; `VALIDATION_FAILED` chỉ hiện "Giá trị không hợp lệ" theo field | Backend chưa trả mã lỗi theo field |
 
 ## 6. Vấn đề mở / lưu ý
@@ -143,6 +158,7 @@ Chưa kiểm tra được giao diện mobile bằng Chrome (cửa sổ không re
 - Skill `ui-ux-pro-max` ở `.claude/skills/SKILL.md` thiếu thư mục riêng + `scripts/` → không nạp được.
 
 ## 7. Nhật ký session (mới nhất trên cùng, giữ tối đa 10 dòng)
+- **2026-11-02** – Voucher UI đã commit + push; nhánh `feature/banner-offers-ui`: màn admin Banner (lọc, ↑/↓, ẩn/hiện, xem trước), carousel banner trang chủ, trang `/offers` + khu Ưu đãi trang chủ, ô `publicOffer` ở voucher; test Chrome CONTENT_MANAGER, sửa 2 lỗi giao diện.
 - **2026-11-02** – Nhánh `feature/voucher-ui`: màn quản lý voucher (lọc, thêm/sửa, tạm dừng, xóa), áp mã ở bước Thanh toán, voucher ở POS (quote + tính lại tại chỗ), dòng giảm giá ở vé / biên nhận / chi tiết đơn; i18n mã lỗi `VOUCHER_*`.
 - **2026-11-02** – Nhánh `feature/booking-counter-ui`: POS cảm ứng (chọn suất, ghế lớn realtime, bắp nước, thu tiền mặt, in vé), đơn đặt vé theo rạp (lọc, tra mã, chi tiết, in lại), vé điện tử QR (`qrcode.react`), `PrintPortal`; sửa toast ghế bị lấy hiện 2 lần. Test Chrome ADMIN / staff2 / customer3, 2 tab POS.
 - **2026-11-01** – Nhánh `feature/booking-ui`: `@stomp/stompjs`, hook ghế realtime, luồng đặt vé (giữ ghế + đếm ngược, bắp nước, xem đơn, hủy), vé của tôi theo tab, admin bắp nước, i18n + mã lỗi booking. Test Chrome 2 tab. Nâng Next 16.4.3 (lỗ hổng), sửa hydration warning do extension.

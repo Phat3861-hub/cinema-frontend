@@ -20,6 +20,7 @@ export function SiteFooter() {
       title: t.footer.cinemas,
       links: [
         { href: ROUTES.cinemas, label: t.footer.allCinemas },
+        { href: ROUTES.offers, label: t.nav.offers },
         { href: ROUTES.myTickets, label: t.nav.myTickets },
       ],
     },
