@@ -1,6 +1,6 @@
 "use client";
 
-import { Armchair, CalendarClock, MapPin, Popcorn, Ticket } from "lucide-react";
+import { Armchair, CalendarClock, MapPin, Popcorn, Star, Ticket } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
@@ -143,6 +143,7 @@ function BookingCard({ booking, now, onCancel }: { booking: Booking; now: number
   const status = displayStatus(booking, now);
   const showtime = booking.showtime;
   const seatCodes = booking.seats.map((seat) => seat.seatCode).join(", ");
+  const watched = tabOf(booking, now) === "watched";
 
   return (
     <li className="flex gap-4 rounded-xl border border-line bg-surface-2 p-3 sm:p-4">
@@ -187,11 +188,25 @@ function BookingCard({ booking, now, onCancel }: { booking: Booking; now: number
           <p className="text-sm font-semibold text-fg-muted">
             {t.booking.totalToPay}: <span className="text-base font-bold text-fg">{formatVnd(booking.totalAmount, intlLocale)}</span>
           </p>
-          {booking.tickets.length > 0 && (
-            <Link href={ROUTES.myTicket(booking.id)} className={buttonClasses({ variant: "outline", size: "sm" })}>
-              <Ticket aria-hidden className="size-4" />
-              {t.account.tickets.viewTickets(booking.tickets.length)}
-            </Link>
+          {(booking.tickets.length > 0 || (watched && showtime)) && (
+            <div className="flex flex-wrap items-center gap-2">
+              {watched && showtime && (
+                <Link
+                  href={`${ROUTES.movieDetail(showtime.movie.slug)}#reviews`}
+                  aria-label={t.account.tickets.reviewItem(showtime.movie.title)}
+                  className={buttonClasses({ size: "sm" })}
+                >
+                  <Star aria-hidden className="size-4" />
+                  {t.account.tickets.review}
+                </Link>
+              )}
+              {booking.tickets.length > 0 && (
+                <Link href={ROUTES.myTicket(booking.id)} className={buttonClasses({ variant: "outline", size: "sm" })}>
+                  <Ticket aria-hidden className="size-4" />
+                  {t.account.tickets.viewTickets(booking.tickets.length)}
+                </Link>
+              )}
+            </div>
           )}
           {status === "PENDING" && (
             <div className="flex flex-wrap items-center gap-3">
