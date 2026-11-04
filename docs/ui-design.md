@@ -149,7 +149,7 @@ Backend vẫn là nơi kiểm tra thật (CLAUDE.md §6). Mục ⏳ có thể d�
 
 | Nhóm | Mục | Route | Quyền (một trong) | API |
 |---|---|---|---|---|
-| Tổng quan | Dashboard | `/admin` | `REPORT_VIEW_ALL`, `REPORT_VIEW_CINEMA` (không có → trang chào + lối tắt) | ⏳ SYS-03 |
+| Tổng quan | Dashboard | `/admin` | `REPORT_VIEW_ALL`, `REPORT_VIEW_CINEMA` (không có → trang chào + lối tắt) | ✅ SYS-03 – thẻ doanh thu, biểu đồ 7 ngày, top 5 phim |
 | Quầy vé | Bán vé tại quầy (POS) | `/admin/pos` | `BOOKING_COUNTER_SELL` | ✅ BOK-09 (tiền mặt) |
 | | Check-in QR | `/admin/check-in` | `TICKET_CHECKIN` | ⏳ BOK-10 |
 | | Đặt vé | `/admin/bookings` | `BOOKING_VIEW_CINEMA`, `BOOKING_VIEW_ALL` | ✅ |
@@ -166,7 +166,7 @@ Backend vẫn là nơi kiểm tra thật (CLAUDE.md §6). Mục ⏳ có thể d�
 | | Nhân viên rạp | `/admin/cinemas/[cinemaId]/staff` | `STAFF_ASSIGN` | ✅ |
 | Kinh doanh | Voucher | `/admin/vouchers` | `VOUCHER_MANAGE_GLOBAL`, `VOUCHER_MANAGE_CINEMA` | ✅ |
 | | Bắp nước | `/admin/products` | `PRODUCT_MANAGE` | ✅ |
-| | Báo cáo | `/admin/reports` | `REPORT_VIEW_ALL`, `REPORT_VIEW_CINEMA` | ⏳ |
+| | Báo cáo | `/admin/reports` | `REPORT_VIEW_ALL`, `REPORT_VIEW_CINEMA` | ✅ SYS-03 – chọn kỳ + rạp, tab Tổng quan / Phim / Rạp / Bắp nước / Kênh bán, xuất CSV |
 | Hệ thống | Người dùng | `/admin/users`, `/[userId]` | `USER_MANAGE` | ✅ chi tiết / khóa / role; ⏳ **danh sách** |
 | | Vai trò & quyền | `/admin/roles` | `ROLE_MANAGE` | ✅ (⏳ tạo / xóa role) |
 | | Audit log | `/admin/audit-logs` | `AUDIT_LOG_VIEW` | ⏳ SYS-04 |
@@ -208,7 +208,7 @@ User có nhiều role → hợp các menu. Role mới do admin tạo tự khớp
 - `GET /api/v1/users` phân trang + lọc (keyword, status, roleCode) – màn Người dùng.
 - `POST /api/v1/roles`, `PUT /api/v1/roles/{id}` (tên / mô tả), `DELETE /api/v1/roles/{id}` (chặn role hệ thống / đang dùng) – "admin tạo role mới không sửa code" (docs backend §3).
 - Hồ sơ cá nhân AUTH-07 (`PUT /auth/me`, avatar) – màn Tài khoản.
-- Thống kê dashboard (SYS-03), showtime, booking, payment, voucher, product, banner, review, audit log – theo lộ trình backend.
+- Showtime, booking, payment, voucher, product, banner, review, audit log – theo lộ trình backend.
 
 ## 7. Figma – trạng thái và việc còn lại
 - 2026-10-28: Figma MCP đã cài (user scope, `https://mcp.figma.com/mcp`) và đọc được 2 file. **Gói Starter hết lượt gọi
