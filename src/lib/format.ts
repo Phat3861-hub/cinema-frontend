@@ -8,6 +8,16 @@ export function formatVnd(amount: number | string, intlLocale = "vi-VN"): string
   );
 }
 
+/** 1500000 -> "1,5 Tr" (vi-VN) / "1.5M" (en-GB): value axes. */
+export function formatCompact(value: number, intlLocale = "vi-VN"): string {
+  return new Intl.NumberFormat(intlLocale, { notation: "compact", maximumFractionDigits: 1 }).format(value);
+}
+
+/** 0.4567 -> "45,7%". */
+export function formatPercent(rate: number, intlLocale = "vi-VN"): string {
+  return new Intl.NumberFormat(intlLocale, { style: "percent", maximumFractionDigits: 1 }).format(rate);
+}
+
 /** ISO instant or `yyyy-MM-dd` -> "31/10/2026". */
 export function formatDate(value: string, intlLocale = "vi-VN"): string {
   return new Intl.DateTimeFormat(intlLocale, {

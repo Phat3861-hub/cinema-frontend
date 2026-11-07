@@ -14,6 +14,7 @@ import { visibleMenu } from "@/features/admin/menu";
 import { useSession } from "@/features/auth/components/session-provider";
 import { hasAny, roleLabel } from "@/features/auth/permissions";
 import { movieApi } from "@/features/movie/api";
+import { ReportOverview } from "@/features/report/components/report-overview";
 import { showtimeApi } from "@/features/showtime/api";
 import type { Showtime } from "@/features/showtime/types";
 import { useApi } from "@/hooks/use-api";
@@ -22,10 +23,11 @@ import { useLocale, useT } from "@/i18n";
 import { addDays, dayParts, formatTime, toIsoDate, todayInVietnam } from "@/lib/format";
 
 const SHOWTIME_READ = ["SHOWTIME_MANAGE", "PRICE_MANAGE", "SEAT_BLOCK"];
+const REPORT_READ = ["REPORT_VIEW_ALL", "REPORT_VIEW_CINEMA"];
 
 /**
- * Admin home (BankDash Dashboard): greeting + roles, stat tiles from the APIs that exist, the selected cinema's
- * showtimes over the next 7 days and shortcuts to every screen the user may open. Revenue reports wait for SYS-03.
+ * Admin home (BankDash Dashboard): greeting + roles, revenue for users with a report permission, stat tiles, the
+ * selected cinema's showtimes over the next 7 days and shortcuts to every screen the user may open.
  */
 export function DashboardScreen() {
   const t = useT();
@@ -34,6 +36,8 @@ export function DashboardScreen() {
   if (!user) return null;
 
   const canShowtimes = hasAny(user, SHOWTIME_READ) && !!selected;
+  const canAllReports = hasAny(user, ["REPORT_VIEW_ALL"]);
+  const canReports = canAllReports || (hasAny(user, REPORT_READ) && !!selected);
   const shortcuts = visibleMenu(user.permissions)
     .flatMap((group) => group.items)
     .filter((item) => item.href !== ROUTES.admin.dashboard);
@@ -61,6 +65,13 @@ export function DashboardScreen() {
           ))}
         </ul>
       </Card>
+
+      {canReports && (
+        <ReportOverview
+          cinemaId={canAllReports ? undefined : selected?.id}
+          scope={canAllReports ? t.admin.reports.allCinemas : (selected?.name ?? "")}
+        />
+      )}
 
       <StatTiles canShowtimes={canShowtimes} />
 

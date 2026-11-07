@@ -124,7 +124,6 @@ export const ADMIN_MENU: AdminMenuGroup[] = [
         href: ROUTES.admin.reports,
         icon: BarChart3,
         permissions: ["REPORT_VIEW_ALL", "REPORT_VIEW_CINEMA"],
-        soon: true,
       },
     ],
   },
