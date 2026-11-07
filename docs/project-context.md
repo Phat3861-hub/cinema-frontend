@@ -4,12 +4,18 @@
 > Cập nhật theo skill `/update-context` (rule CLAUDE.md §0). Ghi **trạng thái hiện tại**, không chép lại code hay git log.
 > Trạng thái backend / API đã sẵn sàng: `../cinema-backend/docs/project-context.md` (mục 4).
 >
-> **Cập nhật lần cuối:** 2026-11-07 (danh sách user, CRUD role, audit log; nhánh `feature/system-admin-ui`)
+> **Cập nhật lần cuối:** 2026-11-07 (thông báo: chuông + trang `/notifications`; nhánh `feature/notification-ui`)
 
 ## 1. Trạng thái hiện tại
 - `feature/auth-ui`, `feature/ui-modules` (PR #2), `feature/booking-ui` (PR #3) đã merge. `feature/booking-counter-ui` (POS, đơn đặt vé
-  theo rạp, vé QR) đã commit, chờ PR; `feature/voucher-ui`, `feature/banner-offers-ui`, `feature/review-ui`, `feature/report-ui` đã commit + push. Nhánh **`feature/system-admin-ui`**
-  (tách từ `feature/report-ui`), **chưa commit**: danh sách user, CRUD role, audit log (backend `feature/system-admin`). Lint / typecheck / build xanh.
+  theo rạp, vé QR) đã commit, chờ PR; `feature/voucher-ui`, `feature/banner-offers-ui`, `feature/review-ui`, `feature/report-ui` đã commit + push, `feature/system-admin-ui` đã commit.
+  Nhánh **`feature/notification-ui`** (tách từ `feature/system-admin-ui`), **chưa commit**: thông báo trong app SYS-02 (backend `feature/notification`). Lint / typecheck / build xanh.
+- **Thông báo** (`features/notification`): `NotificationBell` ở header khách (khi đã đăng nhập) + topbar admin: badge số chưa đọc (`99+`), dropdown 8 mới
+  nhất (tải mỗi lần mở, **portal ra `<body>`** vì `backdrop-blur` của header làm khung chứa cho `fixed`), "Đánh dấu đã đọc tất cả", "Xem tất cả" →
+  `/notifications` (mục **Thông báo** trong sidebar tài khoản + drawer mobile; tab Tất cả / Chưa đọc + số, phân trang 10). `useUnreadCount`: poll 60 s
+  khi tab hiện, + khi focus / `visibilitychange` (cách nhau ≥ 5 s), + sự kiện window `notifications:changed` (`announceNotificationsChanged()` sau khi
+  đọc). Bấm thông báo: đánh dấu đã đọc ngầm rồi đi tới `/my-tickets/{bookingId}` (booking) hoặc `/movies/{slug}#reviews` (đánh giá bị ẩn). Nội dung
+  dựng từ `type` + `data` bằng i18n (`notifications.types`, `text.ts`), giờ tương đối `Intl.RelativeTimeFormat` (≤ 7 ngày, sau đó ngày giờ).
 - **Quản trị hệ thống**: `/admin/users` (`admin-users-screen.tsx`) tab trạng thái + tìm email / tên / SĐT + lọc vai trò / rạp, giữ trong URL
   (`useUrlFilters`, trang bọc `<Suspense>`), chip vai trò kèm tên rạp, phân trang 20; danh sách vai trò lấy từ `/roles` nếu có `ROLE_MANAGE`, không thì
   vai trò dựng sẵn. Chi tiết user: tab **Đơn đặt vé** (`BOOKING_VIEW_ALL`, lọc trạng thái, dùng lại `BookingDetailDialog`), nút **Nhật ký thao tác**
@@ -105,6 +111,7 @@
 | Admin kinh doanh | `/admin/products`, `/admin/vouchers`, `/admin/reports` | Xong |
 | Admin rạp | `/admin/cinemas(/new,/[id])`, `/admin/cinemas/[id]/rooms\|staff\|showtimes`, `/admin/rooms/[id]/layout`, `/admin/seat-types`; `/admin/rooms\|staff\|showtimes` chuyển tới rạp đang chọn | Xong |
 | Admin hệ thống | `/admin/users`, `/admin/users/[id]`, `/admin/roles`, `/admin/audit-logs` | Xong |
+| Thông báo | chuông ở header khách + topbar admin, `/notifications` | Xong (poll, chưa realtime) |
 
 Đã test trên Chrome 2026-10-31: home / chi tiết phim / chọn ghế (light + dark, vi + en); admin với ADMIN, CINEMA_MANAGER,
 TICKET_STAFF, CONTENT_MANAGER (menu đúng quyền, chặn URL không quyền, 403 rạp khác), tạo suất trùng giờ, lưu sơ đồ bị khóa
@@ -133,11 +140,14 @@ en trùng nhãn `tickets` / `ticketRevenue` (lỗi trùng React key), "so với 
 Đã test trên Chrome 2026-11-07 (quản trị hệ thống): ADMIN tạo role theo rạp (quyền toàn hệ thống bị khóa) → tick 2 quyền → lưu → xóa; audit log hiện đủ
 3 dòng của role (Thêm / Bỏ quyền, Trước / Sau, trace ID), lọc theo đối tượng qua URL; danh sách user lọc Quản lý rạp; tab Đơn đặt vé của customer1.
 Sửa sau test: phạm vi trong audit hiện mã thô `CINEMA`. Chưa test: en + light, lọc ngày / email ở audit, role đang gán (nút xóa khóa), màn hẹp.
+Đã test trên Chrome 2026-11-07 (thông báo): staff2 bán quầy với email customer1 → customer1 thấy badge 1, dropdown "Đặt vé thành công" (phim, giờ, rạp,
+phòng, ghế), bấm → `/my-tickets/{id}` + badge về 0; email Mailpit kèm QR từng vé; trang `/notifications`; nhắc giờ chiếu + hủy suất (xem nhật ký session).
 Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng trang vào iframe 390px.
 
 ## 4. Bước tiếp theo
-1. Chủ dự án review + commit nhánh `feature/system-admin-ui` (lệnh PowerShell, không trailer Claude); thứ tự PR:
-   `feature/booking-counter-ui` → `feature/voucher-ui` → `feature/banner-offers-ui` → `feature/review-ui` → `feature/report-ui` → `feature/system-admin-ui`.
+1. Chủ dự án review + commit nhánh `feature/notification-ui` (lệnh PowerShell, không trailer Claude); thứ tự PR:
+   `feature/booking-counter-ui` → `feature/voucher-ui` → `feature/banner-offers-ui` → `feature/review-ui` → `feature/report-ui` → `feature/system-admin-ui` → `feature/notification-ui`.
+   Thông báo realtime (WebSocket STOMP sẵn có) chỉ cân nhắc khi poll 60 s không đủ.
 2. Upload ảnh banner khi backend có S3/MinIO (AUTH-07); hiện nhập URL https.
 3. **(Tạm hoãn)** Backend PR 3 (`feature/payment-vnpay`): bật nút Thanh toán, trang chờ kết quả + bước Vé (dùng `TicketCard`), POS thêm
    VNPay QR. Sau đó check-in QR (`/admin/check-in`), hoàn tiền.
@@ -196,6 +206,7 @@ Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng tran
 - Skill `ui-ux-pro-max` ở `.claude/skills/SKILL.md` thiếu thư mục riêng + `scripts/` → không nạp được.
 
 ## 7. Nhật ký session (mới nhất trên cùng, giữ tối đa 10 dòng)
+- **2026-11-07** – System admin UI đã commit; nhánh `feature/notification-ui`: `features/notification` (chuông + badge poll 60 s, dropdown portal, trang `/notifications` trong sidebar tài khoản, text i18n từ `type` + `data`); test Chrome với bán quầy thật + Mailpit.
 - **2026-11-07** – Báo cáo đã commit + push; nhánh `feature/system-admin-ui`: danh sách user có lọc, tab đơn đặt vé của user, tạo / đổi tên / xóa role + khóa quyền theo phạm vi, màn audit log (`features/audit`); test Chrome ADMIN, sửa 1 lỗi.
 - **2026-11-04** – Đánh giá đã commit + push; nhánh `feature/report-ui`: `features/report`, khối doanh thu ở `/admin`, màn `/admin/reports` 5 tab + xuất CSV; test Chrome ADMIN + manager2, sửa 4 lỗi.
 - **2026-11-03** – Banner + ưu đãi UI đã commit + push; nhánh `feature/review-ui`: khối đánh giá ở trang phim (tổng quan + lọc sao, viết / sửa / xóa, trạng thái bị ẩn), nút Đánh giá phim ở vé đã xem, màn admin kiểm duyệt; test Chrome customer1 + CONTENT_MANAGER, sửa 3 lỗi.
@@ -205,4 +216,3 @@ Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng tran
 - **2026-11-01** – Nhánh `feature/booking-ui`: `@stomp/stompjs`, hook ghế realtime, luồng đặt vé (giữ ghế + đếm ngược, bắp nước, xem đơn, hủy), vé của tôi theo tab, admin bắp nước, i18n + mã lỗi booking. Test Chrome 2 tab. Nâng Next 16.4.3 (lỗ hổng), sửa hydration warning do extension.
 - **2026-10-31** – Nhánh `feature/ui-modules`: token ngữ nghĩa light/dark, i18n vi/en, bộ `components/ui`, màn khách hàng (home, phim, rạp, chọn ghế, tài khoản) + toàn bộ admin theo permission (phim, thể loại, rạp, phòng, sơ đồ ghế, loại ghế, suất chiếu, nhân sự, user, role). Seed dữ liệu test, test Chrome 4 role.
 - **2026-10-30** – Nhánh `feature/auth-ui`: token Ticketor + Manrope, api-client refresh single-flight, các màn auth, `AdminGuard`.
-- **2026-10-28** – Cài Figma MCP; đọc Figma Ticketor + BankDash; viết `docs/ui-design.md`. Chưa code.

@@ -2,6 +2,9 @@
  * Vietnamese UI text – the source of the `Messages` type, so `en.ts` must provide every key.
  * Plain strings may also be referenced by id from server components (`<Msg id="nav.movies" />`).
  */
+/** Booking facts the notification texts are built from (`time` already formatted). */
+export type BookingText = { code: string; movie: string; time: string; place: string; seats: string };
+
 export const vi = {
   common: {
     all: "Tất cả",
@@ -53,6 +56,7 @@ export const vi = {
     main: "Điều hướng chính",
     menu: "Menu",
     movies: "Phim",
+    notifications: "Thông báo",
     myTickets: "Vé của tôi",
     offers: "Ưu đãi",
     openMenu: "Mở menu",
@@ -412,6 +416,43 @@ export const vi = {
     },
   },
 
+  notifications: {
+    title: "Thông báo",
+    bell: (count: number) => (count > 0 ? `Thông báo, ${count} chưa đọc` : "Thông báo"),
+    recent: "Thông báo gần đây",
+    markAllRead: "Đánh dấu đã đọc tất cả",
+    allMarked: "Đã đánh dấu tất cả là đã đọc.",
+    viewAll: "Xem tất cả",
+    unread: "Chưa đọc",
+    justNow: "Vừa xong",
+    tabs: "Lọc thông báo",
+    tabAll: "Tất cả",
+    tabUnread: "Chưa đọc",
+    empty: "Bạn chưa có thông báo nào",
+    emptyUnread: "Không có thông báo chưa đọc",
+    emptyHint: "Thông báo về vé, suất chiếu và đánh giá của bạn sẽ hiện ở đây.",
+    types: {
+      BOOKING_CONFIRMED: {
+        title: "Đặt vé thành công",
+        body: (b: BookingText) => `${b.movie} – ${b.time} tại ${b.place}. Ghế ${b.seats} (mã đơn ${b.code}).`,
+      },
+      SHOWTIME_CANCELLED: {
+        title: "Suất chiếu đã bị hủy",
+        body: (b: BookingText) =>
+          `Suất ${b.movie} lúc ${b.time} tại ${b.place} đã bị hủy. Vé của đơn ${b.code} không còn hiệu lực; rạp sẽ hoàn tiền cho bạn.`,
+      },
+      SHOWTIME_REMINDER: {
+        title: "Sắp đến giờ chiếu",
+        body: (b: BookingText) => `${b.movie} bắt đầu lúc ${b.time} tại ${b.place}. Ghế ${b.seats}.`,
+      },
+      REVIEW_HIDDEN: {
+        title: "Đánh giá của bạn đã bị ẩn",
+        body: (movie: string, reason: string | null, note: string | null) =>
+          `Đánh giá phim ${movie} đã bị ẩn${reason ? ` – lý do: ${reason}` : ""}.${note ? ` Ghi chú: ${note}` : ""}`,
+      },
+    },
+  },
+
   auth: {
     backToLogin: "Quay lại đăng nhập",
     checkEmail: {
@@ -631,6 +672,7 @@ export const vi = {
     VOUCHER_NOT_APPLICABLE: "Mã giảm giá không áp dụng cho rạp hoặc phim này.",
     BANNER_NOT_FOUND: "Banner không tồn tại.",
     REVIEW_NOT_FOUND: "Không tìm thấy đánh giá.",
+    NOTIFICATION_NOT_FOUND: "Không tìm thấy thông báo.",
     REVIEW_ALREADY_EXISTS: "Bạn đã đánh giá phim này – hãy sửa đánh giá hiện có.",
     REVIEW_NOT_ELIGIBLE: "Chỉ khách đã xem phim tại rạp mới có thể đánh giá.",
     REVIEW_HIDDEN: "Đánh giá đã bị kiểm duyệt viên ẩn nên không thể sửa.",

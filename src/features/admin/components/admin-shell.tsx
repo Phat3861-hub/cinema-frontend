@@ -14,6 +14,7 @@ import { ROUTES } from "@/constants/routes";
 import { useAdminCinema } from "@/features/admin/cinema-context";
 import { activeItem, isItemActive, visibleMenu } from "@/features/admin/menu";
 import { useSession } from "@/features/auth/components/session-provider";
+import { NotificationBell } from "@/features/notification/components/notification-bell";
 import { useT } from "@/i18n";
 
 /**
@@ -70,6 +71,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
           <div className="hidden sm:block">
             <PreferenceControls />
           </div>
+          <NotificationBell />
           <UserMenu area="admin" />
         </header>
         <main className="flex flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8">

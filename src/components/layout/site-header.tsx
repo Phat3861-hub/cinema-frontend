@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard, LogOut, Menu as MenuIcon, Search, Ticket, UserRound } from "lucide-react";
+import { Bell, LayoutDashboard, LogOut, Menu as MenuIcon, Search, Ticket, UserRound } from "lucide-react";
 import Form from "next/form";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -13,6 +13,7 @@ import { Drawer } from "@/components/ui/drawer";
 import { ROUTES } from "@/constants/routes";
 import { useSession } from "@/features/auth/components/session-provider";
 import { hasAdminAccess } from "@/features/auth/permissions";
+import { NotificationBell } from "@/features/notification/components/notification-bell";
 import { useT, type Messages } from "@/i18n";
 
 const PILL = "flex h-14 items-center rounded-lg border border-line bg-surface/85 backdrop-blur";
@@ -119,7 +120,10 @@ export function SiteHeader() {
           {status === "loading" ? (
             <div aria-hidden className="h-10 w-28 animate-pulse rounded bg-surface-3 motion-reduce:animate-none" />
           ) : user ? (
-            <UserMenu area="customer" />
+            <>
+              <NotificationBell />
+              <UserMenu area="customer" />
+            </>
           ) : (
             <div className="hidden md:block">
               <AuthButtons />
@@ -149,6 +153,7 @@ export function SiteHeader() {
             <ul className="flex flex-col gap-1 border-t border-line pt-4 text-sm font-semibold">
               <DrawerLink href={ROUTES.account} icon={UserRound} label={t.nav.account} />
               <DrawerLink href={ROUTES.myTickets} icon={Ticket} label={t.nav.myTickets} />
+              <DrawerLink href={ROUTES.notifications} icon={Bell} label={t.nav.notifications} />
               {hasAdminAccess(user) && (
                 <DrawerLink href={ROUTES.admin.dashboard} icon={LayoutDashboard} label={t.nav.admin} />
               )}

@@ -11,6 +11,7 @@ export const ROUTES = {
   booking: (showtimeId: Id) => `/booking/${showtimeId}`,
   myTickets: "/my-tickets",
   myTicket: (bookingId: Id) => `/my-tickets/${bookingId}`,
+  notifications: "/notifications",
   account: "/account",
   login: "/login",
   register: "/register",
