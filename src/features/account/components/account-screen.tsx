@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, KeyRound, LogOut, MonitorSmartphone, Ticket, UserRound } from "lucide-react";
+import { Bell, Coins, KeyRound, LogOut, MonitorSmartphone, Ticket, UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
@@ -27,16 +27,17 @@ import {
 } from "@/features/auth/validation";
 import { BookingTickets } from "@/features/booking/components/booking-tickets";
 import { MyBookings } from "@/features/booking/components/my-bookings";
+import { MyPoints } from "@/features/loyalty/components/my-points";
 import { MyNotifications } from "@/features/notification/components/my-notifications";
 import { useT } from "@/i18n";
 import { errorCodeOf, getErrorMessage } from "@/lib/error-messages";
 
-type Section = "account" | "tickets" | "notifications";
+type Section = "account" | "tickets" | "points" | "notifications";
 
 /**
  * Profile sidebar (Ticketor Profile) + editable profile with avatar, change password, sign out of every device; the tickets section
  * shows the booking history, or one booking's e-tickets when `bookingId` is given; the notifications section lists
- * the in-app notifications.
+ * the in-app notifications; the points section shows the loyalty balance and its history.
  */
 export function AccountScreen({ section, bookingId }: { section: Section; bookingId?: number }) {
   const router = useRouter();
@@ -56,6 +57,8 @@ export function AccountScreen({ section, bookingId }: { section: Section; bookin
         <AccountDetails user={user} />
       ) : section === "notifications" ? (
         <MyNotifications />
+      ) : section === "points" ? (
+        <MyPoints />
       ) : bookingId !== undefined ? (
         <BookingTickets bookingId={bookingId} />
       ) : (
@@ -72,6 +75,7 @@ function AccountNav({ user, section }: { user: CurrentUser; section: Section }) 
   const items = [
     { key: "account", href: ROUTES.account, label: t.nav.account, icon: UserRound },
     { key: "tickets", href: ROUTES.myTickets, label: t.nav.myTickets, icon: Ticket },
+    { key: "points", href: ROUTES.points, label: t.nav.points, icon: Coins },
     { key: "notifications", href: ROUTES.notifications, label: t.nav.notifications, icon: Bell },
   ] as const;
 

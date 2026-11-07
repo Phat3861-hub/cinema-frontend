@@ -3,6 +3,7 @@
 import { QRCodeSVG } from "qrcode.react";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import type { Booking, BookingTicket, TicketStatus } from "@/features/booking/types";
+import { discountLines } from "@/features/booking/discount-lines";
 import { useLocale, useT } from "@/i18n";
 import { formatDateTime, formatVnd } from "@/lib/format";
 
@@ -107,12 +108,12 @@ export function PrintableTickets({ booking }: { booking: Booking }) {
             <span>{formatVnd(item.totalPrice, intlLocale)}</span>
           </p>
         ))}
-        {Number(booking.discountAmount) > 0 && (
-          <p className="flex justify-between gap-4">
-            <span>{booking.voucher ? t.promotion.discountLine(booking.voucher.code) : t.booking.discount}</span>
-            <span>−{formatVnd(booking.discountAmount, intlLocale)}</span>
+        {discountLines(booking, t, intlLocale).map((line) => (
+          <p key={line.key} className="flex justify-between gap-4">
+            <span>{line.label}</span>
+            <span>−{formatVnd(line.amount, intlLocale)}</span>
           </p>
-        )}
+        ))}
         <p className="mt-2 flex justify-between gap-4 text-base font-bold">
           <span>{t.booking.totalToPay}</span>
           <span>{formatVnd(booking.totalAmount, intlLocale)}</span>

@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { PrintPortal } from "@/components/ui/print-portal";
 import { PrintableTickets, TicketCard } from "@/features/booking/components/ticket-card";
 import type { Booking } from "@/features/booking/types";
+import { discountLines } from "@/features/booking/discount-lines";
+import { formatPoints } from "@/features/loyalty/rules";
 import { useLocale, useT } from "@/i18n";
 import { formatVnd } from "@/lib/format";
 
@@ -35,10 +37,13 @@ export function PosReceipt({ booking, received, onNext }: { booking: Booking; re
             {t.booking.bookingCode}: <span className="font-mono text-base font-bold text-fg">{booking.bookingCode}</span>
             {booking.customer?.userId != null && ` · ${t.admin.pos.linkedToAccount}`}
           </p>
-          {booking.voucher && (
-            <p className="text-sm font-semibold text-success">
-              {t.promotion.discountLine(booking.voucher.code)}: −{formatVnd(booking.discountAmount, intlLocale)}
+          {discountLines(booking, t, intlLocale).map((line) => (
+            <p key={line.key} className="text-sm font-semibold text-success">
+              {line.label}: −{formatVnd(line.amount, intlLocale)}
             </p>
+          ))}
+          {booking.pointsEarned > 0 && (
+            <p className="text-sm font-semibold text-accent">{t.loyalty.earnLine(formatPoints(booking.pointsEarned, intlLocale))}</p>
           )}
         </div>
       </div>

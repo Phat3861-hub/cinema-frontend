@@ -5,7 +5,7 @@ export const AUDIT_ENTITY_TYPES: AuditEntityType[] = ["USER", "ROLE", "MOVIE", "
 
 /** Mirrors AuditAction, grouped by the kind of record it is about (order of the action filter). */
 export const AUDIT_ACTIONS = {
-  USER: ["USER_LOCK", "USER_UNLOCK", "ROLE_ASSIGN", "ROLE_REMOVE"],
+  USER: ["USER_LOCK", "USER_UNLOCK", "ROLE_ASSIGN", "ROLE_REMOVE", "LOYALTY_ADJUST"],
   ROLE: ["ROLE_CREATE", "ROLE_UPDATE", "ROLE_DELETE", "ROLE_PERMISSIONS_UPDATE"],
   MOVIE: ["MOVIE_DELETE"],
   CINEMA: ["CINEMA_DELETE"],

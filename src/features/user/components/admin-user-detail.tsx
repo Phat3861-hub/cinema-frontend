@@ -24,6 +24,7 @@ import type { UserRole } from "@/features/auth/types";
 import { BookingDetailDialog } from "@/features/booking/components/admin-bookings-screen";
 import { BOOKING_STATUS_TONES } from "@/features/booking/components/my-bookings";
 import { BOOKING_STATUSES, type Booking, type BookingStatus } from "@/features/booking/types";
+import { AdminUserPoints } from "@/features/loyalty/components/admin-user-points";
 import { rbacApi, userApi } from "@/features/user/api";
 import type { UserDetail } from "@/features/user/types";
 import { useApi } from "@/hooks/use-api";
@@ -34,12 +35,12 @@ import { formatDate, formatDateTime, formatVnd } from "@/lib/format";
 const STATUS_TONE = { ACTIVE: "success", PENDING: "warning", LOCKED: "danger" } as const;
 const BOOKINGS_PAGE_SIZE = 10;
 
-/** BankDash Setting layout: header with lock / unlock, tabs Roles · Bookings (BOOKING_VIEW_ALL). */
+/** BankDash Setting layout: header with lock / unlock, tabs Roles · Bookings (BOOKING_VIEW_ALL) · Points. */
 export function AdminUserDetail({ userId }: { userId: string }) {
   const t = useT();
   const { user: me } = useSession();
   const detail = useApi(`user:${userId}`, () => userApi.get(userId));
-  const [tab, setTab] = useState<"roles" | "bookings">("roles");
+  const [tab, setTab] = useState<"roles" | "bookings" | "points">("roles");
   const canSeeBookings = hasAny(me, ["BOOKING_VIEW_ALL"]);
 
   if (detail.error && !detail.data) return <ErrorState error={detail.error} onRetry={detail.reload} />;
@@ -60,10 +61,13 @@ export function AdminUserDetail({ userId }: { userId: string }) {
           items={[
             { value: "roles", label: t.admin.users.rolesTab, count: detail.data.roles.length },
             ...(canSeeBookings ? [{ value: "bookings" as const, label: t.admin.users.bookingsTab }] : []),
+            { value: "points", label: t.loyalty.tab },
           ]}
         />
         {tab === "bookings" && canSeeBookings ? (
           <UserBookings userId={detail.data.user.id} />
+        ) : tab === "points" ? (
+          <AdminUserPoints userId={detail.data.user.id} self={me?.id === detail.data.user.id} />
         ) : (
           <Roles detail={detail.data} onChange={(roles) => detail.setData((d) => (d ? { ...d, roles } : d))} />
         )}
