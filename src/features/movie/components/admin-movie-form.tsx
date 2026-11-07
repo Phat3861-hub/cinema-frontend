@@ -15,6 +15,7 @@ import { TextareaField } from "@/components/ui/textarea-field";
 import { useToast } from "@/components/ui/toast";
 import { ROUTES } from "@/constants/routes";
 import { adminChecks, anyError, backendFieldErrors, optional, type Errors } from "@/features/admin/form-utils";
+import { ImageUploadField } from "@/features/media/components/image-upload-field";
 import { genreApi, movieApi } from "@/features/movie/api";
 import { MovieStatusBadge } from "@/features/movie/components/movie-badges";
 import { genreLabel } from "@/features/movie/labels";
@@ -155,14 +156,12 @@ function MovieForm({ movie }: { movie?: Movie }) {
           <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl border border-line bg-surface-3">
             <CoverImage src={values.posterUrl.trim() || null} alt={t.admin.movies.posterPreview} sizes="300px" />
           </div>
-          <TextField
+          <ImageUploadField
+            purpose="MOVIE_POSTER"
             label={t.admin.movies.posterUrl}
             optional
-            size="md"
-            type="url"
-            placeholder="https://…"
             value={values.posterUrl}
-            onChange={set("posterUrl")}
+            onChange={(url) => setValues((v) => ({ ...v, posterUrl: url }))}
             error={errors.posterUrl}
           />
           {movie && (

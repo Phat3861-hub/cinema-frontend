@@ -125,7 +125,7 @@ API: ✅ đã có · ⏳ backend chưa làm (dựng UI với dữ liệu giả /
 | `/my-tickets` | Profile/Manage Tickets `4281:26337` | ✅ `/bookings/me` | Sidebar tài khoản (dưới). "Sắp tới" / "Đã xem" (+ "Đã hủy / hoàn tiền"); dòng: poster, tên phim, ngày giờ, rạp, số vé + ghế, badge trạng thái, "Chi tiết" |
 | `/my-tickets/[bookingId]` | Profile/Manage Tickets/Ticket `4281:26485` | ✅ `/bookings/{id}` (vé + QR, in vé); ⏳ hoàn tiền | Vé có QR, nút yêu cầu hoàn tiền (`REFUND_REQUEST`, theo điều kiện docs backend §5.4) |
 | `/notifications` | (mới – sidebar Profile) | ✅ `/notifications/me`, `unread-count`, `read`, `read-all` | Tab Tất cả / Chưa đọc (+ số), phân trang 10, nút "Đánh dấu đã đọc tất cả". Dòng: icon theo loại (vé xanh, hủy suất đỏ, nhắc giờ accent, đánh giá bị ẩn vàng), tiêu đề + nội dung dịch từ `type` + `data`, giờ tương đối, chấm chưa đọc; bấm → vé / phim `#reviews` |
-| `/account` | Profile/Dashboard `4281:27425` + form Setting BankDash | ✅ `/auth/me`; ⏳ cập nhật hồ sơ (AUTH-07) | Thông tin tài khoản; tab **Đổi mật khẩu** (✅ `POST /auth/change-password`) và **Đăng xuất mọi thiết bị** (✅ `POST /auth/logout-all`) |
+| `/account` | Profile/Dashboard `4281:27425` + form Setting BankDash | ✅ `/auth/me`, `PUT /auth/me`, `POST · DELETE /auth/me/avatar` | Avatar (tải / đổi / xóa) + form hồ sơ (họ tên, email khóa, SĐT, ngày sinh, giới tính, trạng thái, vai trò); khối **Đổi mật khẩu** (✅ `POST /auth/change-password`) và **Đăng xuất mọi thiết bị** (✅ `POST /auth/logout-all`) |
 
 **Sidebar tài khoản** (Profile): Tài khoản · Vé của tôi · Thông báo · Điểm thưởng (⏳ PRO-02, ẩn tới khi có) · Đăng xuất.
 **Bỏ** My Wallet, Payments, My Watchlist (không có trong nghiệp vụ).
@@ -207,7 +207,7 @@ User có nhiều role → hợp các menu. Role mới do admin tạo tự khớp
 
 ## 6. Khoảng trống backend cần cho UI
 (Đã ghi sang `cinema-backend/docs/project-context.md` – Bước tiếp theo.)
-- Hồ sơ cá nhân AUTH-07 (`PUT /auth/me`, avatar) – màn Tài khoản.
+- ~~Hồ sơ cá nhân AUTH-07 (`PUT /auth/me`, avatar) – màn Tài khoản.~~ ✅ 2026-11-07. Ảnh ở form admin (banner, poster, bắp nước, rạp): ô URL + nút **Tải ảnh lên** (`POST /uploads/images`).
 - Payment, check-in, hoàn tiền – theo lộ trình backend (đang tạm hoãn).
 
 ## 7. Figma – trạng thái và việc còn lại

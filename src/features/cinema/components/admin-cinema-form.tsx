@@ -17,6 +17,7 @@ import { useAdminCinema } from "@/features/admin/cinema-context";
 import { adminChecks, anyError, backendFieldErrors, optional, type Errors } from "@/features/admin/form-utils";
 import { cinemaApi } from "@/features/cinema/api";
 import type { Cinema, CinemaRequest, CinemaStatus } from "@/features/cinema/types";
+import { ImageUploadField } from "@/features/media/components/image-upload-field";
 import { useApi } from "@/hooks/use-api";
 import { useT } from "@/i18n";
 import { getErrorMessage } from "@/lib/error-messages";
@@ -141,14 +142,12 @@ function CinemaForm({ cinema }: { cinema?: Cinema }) {
           <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-line bg-surface-3">
             <CoverImage src={values.imageUrl.trim() || null} alt={t.admin.cinemas.imagePreview} sizes="340px" />
           </div>
-          <TextField
+          <ImageUploadField
+            purpose="CINEMA"
             label={t.admin.cinemas.imageUrl}
             optional
-            size="md"
-            type="url"
-            placeholder="https://…"
             value={values.imageUrl}
-            onChange={set("imageUrl")}
+            onChange={(url) => setValues((v) => ({ ...v, imageUrl: url }))}
             error={errors.imageUrl}
           />
           <SelectField label={t.admin.common.status} value={values.status} onChange={set("status")} hint={t.admin.cinemas.statusHint}>

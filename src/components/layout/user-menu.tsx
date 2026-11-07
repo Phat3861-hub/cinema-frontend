@@ -1,7 +1,9 @@
 "use client";
 
 import { LayoutDashboard, LogOut, Ticket, UserRound } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Menu, type MenuItem } from "@/components/ui/menu";
 import { ROUTES } from "@/constants/routes";
 import { useSession } from "@/features/auth/components/session-provider";
@@ -17,12 +19,39 @@ export function initials(name: string): string {
   return (first + last).toUpperCase();
 }
 
-export function Avatar({ user, size = "md" }: { user: Pick<CurrentUser, "fullName">; size?: "md" | "lg" }) {
+const AVATAR_SIZES = {
+  md: { px: 36, classes: "size-9 text-sm" },
+  lg: { px: 48, classes: "size-12 text-base" },
+  xl: { px: 96, classes: "size-24 text-2xl" },
+} as const;
+
+/** Profile photo, or the name initials on yellow when there is none (or it fails to load). Decorative. */
+export function Avatar({
+  user,
+  size = "md",
+}: {
+  user: Pick<CurrentUser, "fullName"> & { avatarUrl?: string | null };
+  size?: keyof typeof AVATAR_SIZES;
+}) {
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const { px, classes } = AVATAR_SIZES[size];
+  const src = user.avatarUrl && user.avatarUrl !== failedSrc ? user.avatarUrl : null;
+
+  if (src) {
+    return (
+      <Image
+        src={src}
+        alt=""
+        aria-hidden
+        width={px}
+        height={px}
+        onError={() => setFailedSrc(src)}
+        className={`shrink-0 rounded-full border border-line bg-surface-3 object-cover ${classes}`}
+      />
+    );
+  }
   return (
-    <span
-      aria-hidden
-      className={`flex shrink-0 items-center justify-center rounded-full bg-primary font-bold text-black ${size === "lg" ? "size-12 text-base" : "size-9 text-sm"}`}
-    >
+    <span aria-hidden className={`flex shrink-0 items-center justify-center rounded-full bg-primary font-bold text-black ${classes}`}>
       {initials(user.fullName)}
     </span>
   );

@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "**" },
       { protocol: "http", hostname: "**" },
     ],
+    // Dev only: uploaded images are served by the local storage container (localhost:9000), which the image
+    // optimizer refuses by default (SSRF guard). Production storage is a public host / CDN.
+    dangerouslyAllowLocalIP: process.env.NODE_ENV === "development",
   },
   turbopack: {
     rules: {

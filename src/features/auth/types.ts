@@ -4,6 +4,9 @@ export type UserStatus = "PENDING" | "ACTIVE" | "LOCKED";
 /** GLOBAL = whole system, CINEMA = bound to one cinema (`cinemaId`). */
 export type RoleScope = "GLOBAL" | "CINEMA";
 
+/** Mirrors com.pnt.cinema.modules.auth.entity.Gender. */
+export type Gender = "MALE" | "FEMALE" | "OTHER";
+
 /** Mirrors UserRoleResponse; `id` is the user_roles row id. */
 export interface UserRole {
   id: number;
@@ -21,6 +24,9 @@ export interface CurrentUser {
   fullName: string;
   phone: string | null;
   avatarUrl: string | null;
+  /** ISO date (yyyy-MM-dd). */
+  dateOfBirth: string | null;
+  gender: Gender | null;
   status: UserStatus;
   emailVerifiedAt: string | null;
   roles: UserRole[];
@@ -40,10 +46,19 @@ export interface RegisteredUser {
   email: string;
   fullName: string;
   phone: string | null;
+  avatarUrl: string | null;
   status: UserStatus;
   emailVerifiedAt: string | null;
   lastLoginAt: string | null;
   createdAt: string;
+}
+
+/** `PUT /auth/me`: full replacement, an omitted optional field is cleared. */
+export interface UpdateProfileRequest {
+  fullName: string;
+  phone?: string;
+  dateOfBirth?: string;
+  gender?: Gender;
 }
 
 export interface LoginRequest {

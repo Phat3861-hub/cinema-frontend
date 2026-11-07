@@ -4,12 +4,22 @@
 > Cập nhật theo skill `/update-context` (rule CLAUDE.md §0). Ghi **trạng thái hiện tại**, không chép lại code hay git log.
 > Trạng thái backend / API đã sẵn sàng: `../cinema-backend/docs/project-context.md` (mục 4).
 >
-> **Cập nhật lần cuối:** 2026-11-07 (thông báo: chuông + trang `/notifications`; nhánh `feature/notification-ui`)
+> **Cập nhật lần cuối:** 2026-11-07 (hồ sơ + avatar + upload ảnh admin; nhánh `feature/profile-ui`)
 
 ## 1. Trạng thái hiện tại
 - `feature/auth-ui`, `feature/ui-modules` (PR #2), `feature/booking-ui` (PR #3) đã merge. `feature/booking-counter-ui` (POS, đơn đặt vé
   theo rạp, vé QR) đã commit, chờ PR; `feature/voucher-ui`, `feature/banner-offers-ui`, `feature/review-ui`, `feature/report-ui` đã commit + push, `feature/system-admin-ui` đã commit.
-  Nhánh **`feature/notification-ui`** (tách từ `feature/system-admin-ui`), **chưa commit**: thông báo trong app SYS-02 (backend `feature/notification`). Lint / typecheck / build xanh.
+  `feature/notification-ui` (SYS-02) đã commit. Nhánh **`feature/profile-ui`** (tách từ `feature/notification-ui`), **chưa commit**: hồ sơ AUTH-07 + upload ảnh
+  (backend `feature/profile-storage`). Lint / typecheck / build xanh.
+- **Hồ sơ + ảnh**: `/account` dùng `ProfileForm` (`features/account/components/profile-form.tsx`): avatar lớn + **Tải ảnh lên / Đổi ảnh** / **Xóa ảnh**
+  (xác nhận); họ tên, email (khóa, gợi ý không đổi được), SĐT, ngày sinh (`type="date"`, 1900 → hôm qua), giới tính (Không chọn / Nam / Nữ / Khác),
+  trạng thái + vai trò; nút Lưu chỉ bật khi có thay đổi, `PUT /auth/me` gửi đủ field (để trống = xóa), `PHONE_ALREADY_EXISTS` hiện dưới ô SĐT,
+  xong thì `setUser` ⇒ header / sidebar đổi ngay. Avatar: kiểm tra loại + ≤ 20 MB ở client, **cắt vuông giữa + thu về 512 px JPEG bằng canvas**
+  (`avatarBlob` trong `features/media/image-file.ts`, `createImageBitmap` xoay theo EXIF) rồi `POST /auth/me/avatar`. `Avatar` (`user-menu.tsx`)
+  hiện ảnh (`next/image`, size md / lg / xl), lỗi tải ⇒ chữ cái đầu; dùng ở menu user, sidebar tài khoản, dashboard admin, danh sách / chi tiết user.
+  **Ảnh admin**: `ImageUploadField` (`features/media/components/`) = ô URL + nút **Tải ảnh lên** (ẩn nếu thiếu quyền của purpose), kiểm tra JPEG / PNG /
+  WebP ≤ 5 MB rồi `POST /uploads/images` → điền URL; dùng ở banner (BANNER), poster phim (MOVIE_POSTER), bắp nước (PRODUCT), rạp (CINEMA). Banner nhận
+  https hoặc URL bắt đầu bằng `env.mediaUrl` (`isUploadedImage`). `apiFetch` gửi `FormData` nguyên dạng (không đặt `Content-Type`).
 - **Thông báo** (`features/notification`): `NotificationBell` ở header khách (khi đã đăng nhập) + topbar admin: badge số chưa đọc (`99+`), dropdown 8 mới
   nhất (tải mỗi lần mở, **portal ra `<body>`** vì `backdrop-blur` của header làm khung chứa cho `fixed`), "Đánh dấu đã đọc tất cả", "Xem tất cả" →
   `/notifications` (mục **Thông báo** trong sidebar tài khoản + drawer mobile; tab Tất cả / Chưa đọc + số, phân trang 10). `useUnreadCount`: poll 60 s
@@ -95,7 +105,9 @@
   audit log) là trang "Sắp có".
 
 ## 2. Môi trường dev
-- `npm run dev` → `http://localhost:3000`, backend `http://localhost:8080`, Mailpit `http://localhost:8025`.
+- `npm run dev` → `http://localhost:3000`, backend `http://localhost:8080`, Mailpit `http://localhost:8025`, ảnh tải lên `http://localhost:9000/cinema-media/...`
+  (RustFS của backend: `docker compose up -d`). Biến mới `NEXT_PUBLIC_MEDIA_URL` (mặc định URL đó). `next.config.ts` bật `images.dangerouslyAllowLocalIP`
+  **chỉ ở dev** để `next/image` tối ưu được ảnh từ localhost.
 - Backend chạy với `ADMIN_EMAIL` / `ADMIN_PASSWORD` (hướng dẫn: backend `docs/huong-dan-test-swagger.md`).
 - Backend booking cần thêm **Redis** (container `cinema-redis`); không có Redis thì giữ ghế trả 503 `SEAT_HOLD_UNAVAILABLE`.
 - Dữ liệu test: script seed của backend (`cinema-backend/seed/`, gitignore) – tài khoản, rạp, suất, sản phẩm, đơn mẫu ghi trong
@@ -145,14 +157,14 @@ phòng, ghế), bấm → `/my-tickets/{id}` + badge về 0; email Mailpit kèm 
 Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng trang vào iframe 390px.
 
 ## 4. Bước tiếp theo
-1. Chủ dự án review + commit nhánh `feature/notification-ui` (lệnh PowerShell, không trailer Claude); thứ tự PR:
-   `feature/booking-counter-ui` → `feature/voucher-ui` → `feature/banner-offers-ui` → `feature/review-ui` → `feature/report-ui` → `feature/system-admin-ui` → `feature/notification-ui`.
+1. Chủ dự án review + commit nhánh `feature/profile-ui` (lệnh PowerShell, không trailer Claude); thứ tự PR:
+   `feature/booking-counter-ui` → `feature/voucher-ui` → `feature/banner-offers-ui` → `feature/review-ui` → `feature/report-ui` → `feature/system-admin-ui` → `feature/notification-ui`
+   → `feature/profile-ui`. Test tay trên trình duyệt các mục ở §6 (hồ sơ / upload).
    Thông báo realtime (WebSocket STOMP sẵn có) chỉ cân nhắc khi poll 60 s không đủ.
-2. Upload ảnh banner khi backend có S3/MinIO (AUTH-07); hiện nhập URL https.
-3. **(Tạm hoãn)** Backend PR 3 (`feature/payment-vnpay`): bật nút Thanh toán, trang chờ kết quả + bước Vé (dùng `TicketCard`), POS thêm
+2. **(Tạm hoãn)** Backend PR 3 (`feature/payment-vnpay`): bật nút Thanh toán, trang chờ kết quả + bước Vé (dùng `TicketCard`), POS thêm
    VNPay QR. Sau đó check-in QR (`/admin/check-in`), hoàn tiền.
-4. Kiểm tra giao diện mobile (DevTools device mode) cho header/drawer, sidebar admin, bảng suất chiếu, trình thiết kế ghế, luồng đặt vé.
-6. Backend trả mô tả role bằng tiếng Anh (`description`) → cần dịch theo `code` hoặc backend thêm bản vi.
+3. Kiểm tra giao diện mobile (DevTools device mode) cho header/drawer, sidebar admin, bảng suất chiếu, trình thiết kế ghế, luồng đặt vé.
+4. Backend trả mô tả role bằng tiếng Anh (`description`) → cần dịch theo `code` hoặc backend thêm bản vi.
 
 ## 5. Quyết định thiết kế
 | Ngày | Quyết định | Lý do |
@@ -178,9 +190,15 @@ Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng tran
 | 2026-11-04 | Cột chồng là tiền **trước giảm giá**; tổng sau giảm nằm ở tooltip + bảng | Voucher áp cả đơn nên không chia được vào hai phần của cột; phụ đề biểu đồ ghi rõ |
 | 2026-11-03 | Chọn sao bằng 5 `input type="radio"` native (ẩn `sr-only`) vẽ thành icon sao | Bàn phím (mũi tên) + trình đọc màn hình đúng sẵn, không phải tự viết radiogroup ARIA |
 | 2026-11-03 | Không hiện "đã sửa" cho đánh giá | `updatedAt` cũng đổi khi kiểm duyệt ẩn / hiện ⇒ không phân biệt được khách sửa; cần cột `edited_at` ở backend nếu muốn |
+| 2026-11-07 | Upload ảnh admin bằng nút cạnh ô URL (vẫn dán URL được), upload ngay khi chọn file rồi điền URL | Form và API lưu không đổi; ảnh ngoài vẫn dùng được |
+| 2026-11-07 | Avatar cắt + thu nhỏ ở trình duyệt trước khi gửi (canvas, 512 px JPEG), server cắt lại 256 px | Ảnh điện thoại xoay đúng theo EXIF, file lớn vẫn dưới giới hạn 2 MB |
+| 2026-11-07 | `dangerouslyAllowLocalIP` chỉ bật khi `NODE_ENV=development` | Ảnh dev nằm ở localhost:9000; production dùng storage / CDN công khai nên giữ chặn SSRF |
 | 2026-10-30 | Validation client lặp lại rule DTO backend; `VALIDATION_FAILED` chỉ hiện "Giá trị không hợp lệ" theo field | Backend chưa trả mã lỗi theo field |
 
 ## 6. Vấn đề mở / lưu ý
+- Hồ sơ / upload ảnh **chưa test trên trình duyệt** (Chrome extension mất kết nối 2026-11-07): đã test API thật + `/_next/image` với ảnh RustFS. Cần thử tay:
+  đổi / xóa avatar, ảnh điện thoại xoay EXIF, upload ở 4 form admin, banner với ảnh tải lên, light / dark, en, màn hẹp.
+- Ảnh tải lên mà không bấm Lưu form vẫn nằm trong storage (backend chưa có job dọn).
 - Audit chỉ lưu id phim / phòng ⇒ hiện `#id`; rạp đổi ra tên nhờ danh sách rạp ở topbar. Trạng thái (`status`) trong Trước / Sau hiện mã gốc.
 - **Figma MCP gói Starter hết lượt gọi** → code theo `docs/ui-design.md`.
 - Ảnh nền auth `public/images/auth-cover.webp` lấy từ file Community, **chưa rõ giấy phép** – thay trước khi public.
@@ -206,6 +224,7 @@ Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng tran
 - Skill `ui-ux-pro-max` ở `.claude/skills/SKILL.md` thiếu thư mục riêng + `scripts/` → không nạp được.
 
 ## 7. Nhật ký session (mới nhất trên cùng, giữ tối đa 10 dòng)
+- **2026-11-07** – Thông báo UI đã commit; nhánh `feature/profile-ui`: `/account` sửa hồ sơ + avatar (cắt ở canvas), `Avatar` hiện ảnh, `ImageUploadField` ở form banner / phim / bắp nước / rạp, `apiFetch` gửi FormData; lint / typecheck / build xanh, test API thật (chưa test trình duyệt).
 - **2026-11-07** – System admin UI đã commit; nhánh `feature/notification-ui`: `features/notification` (chuông + badge poll 60 s, dropdown portal, trang `/notifications` trong sidebar tài khoản, text i18n từ `type` + `data`); test Chrome với bán quầy thật + Mailpit.
 - **2026-11-07** – Báo cáo đã commit + push; nhánh `feature/system-admin-ui`: danh sách user có lọc, tab đơn đặt vé của user, tạo / đổi tên / xóa role + khóa quyền theo phạm vi, màn audit log (`features/audit`); test Chrome ADMIN, sửa 1 lỗi.
 - **2026-11-04** – Đánh giá đã commit + push; nhánh `feature/report-ui`: `features/report`, khối doanh thu ở `/admin`, màn `/admin/reports` 5 tab + xuất CSV; test Chrome ADMIN + manager2, sửa 4 lỗi.
@@ -215,4 +234,3 @@ Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng tran
 - **2026-11-02** – Nhánh `feature/booking-counter-ui`: POS cảm ứng (chọn suất, ghế lớn realtime, bắp nước, thu tiền mặt, in vé), đơn đặt vé theo rạp (lọc, tra mã, chi tiết, in lại), vé điện tử QR (`qrcode.react`), `PrintPortal`; sửa toast ghế bị lấy hiện 2 lần. Test Chrome ADMIN / staff2 / customer3, 2 tab POS.
 - **2026-11-01** – Nhánh `feature/booking-ui`: `@stomp/stompjs`, hook ghế realtime, luồng đặt vé (giữ ghế + đếm ngược, bắp nước, xem đơn, hủy), vé của tôi theo tab, admin bắp nước, i18n + mã lỗi booking. Test Chrome 2 tab. Nâng Next 16.4.3 (lỗ hổng), sửa hydration warning do extension.
 - **2026-10-31** – Nhánh `feature/ui-modules`: token ngữ nghĩa light/dark, i18n vi/en, bộ `components/ui`, màn khách hàng (home, phim, rạp, chọn ghế, tài khoản) + toàn bộ admin theo permission (phim, thể loại, rạp, phòng, sơ đồ ghế, loại ghế, suất chiếu, nhân sự, user, role). Seed dữ liệu test, test Chrome 4 role.
-- **2026-10-30** – Nhánh `feature/auth-ui`: token Ticketor + Manrope, api-client refresh single-flight, các màn auth, `AdminGuard`.
