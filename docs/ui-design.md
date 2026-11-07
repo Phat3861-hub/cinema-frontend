@@ -167,9 +167,9 @@ Backend vẫn là nơi kiểm tra thật (CLAUDE.md §6). Mục ⏳ có thể d�
 | Kinh doanh | Voucher | `/admin/vouchers` | `VOUCHER_MANAGE_GLOBAL`, `VOUCHER_MANAGE_CINEMA` | ✅ |
 | | Bắp nước | `/admin/products` | `PRODUCT_MANAGE` | ✅ |
 | | Báo cáo | `/admin/reports` | `REPORT_VIEW_ALL`, `REPORT_VIEW_CINEMA` | ✅ SYS-03 – chọn kỳ + rạp, tab Tổng quan / Phim / Rạp / Bắp nước / Kênh bán, xuất CSV |
-| Hệ thống | Người dùng | `/admin/users`, `/[userId]` | `USER_MANAGE` | ✅ chi tiết / khóa / role; ⏳ **danh sách** |
-| | Vai trò & quyền | `/admin/roles` | `ROLE_MANAGE` | ✅ (⏳ tạo / xóa role) |
-| | Audit log | `/admin/audit-logs` | `AUDIT_LOG_VIEW` | ⏳ SYS-04 |
+| Hệ thống | Người dùng | `/admin/users`, `/[userId]` | `USER_MANAGE` | ✅ danh sách / chi tiết / khóa / role / đơn đặt vé |
+| | Vai trò & quyền | `/admin/roles` | `ROLE_MANAGE` | ✅ (gồm tạo / đổi tên / xóa role) |
+| | Audit log | `/admin/audit-logs` | `AUDIT_LOG_VIEW` | ✅ SYS-04 |
 
 **Menu mà mỗi role seed (V2) nhìn thấy** – để kiểm tra khi test:
 | Role | Phạm vi | Thấy |
@@ -199,16 +199,14 @@ User có nhiều role → hợp các menu. Role mới do admin tạo tự khớp
 | **Thiết kế sơ đồ ghế** | màn mới (mượn lưới ghế Seat Selection) | Thanh công cụ "cọ vẽ": Thường `S` · VIP `V` · Đôi `C` (luôn 2 ô liền) · Lối đi `.`; thêm / bớt hàng, cột; tô theo ô / kéo chọn vùng / cả hàng. Màn hình "MÀN HÌNH" phía trên, nhãn hàng A.. hai bên, số ghế bỏ qua lối đi. Panel phải: chú thích + phụ thu từng loại, tổng ghế theo loại, nút Lưu (`PUT /rooms/{id}/layout`, gửi `grid`). Chế độ **Khóa ghế** (`SEAT_BLOCK`): bấm ghế → bật / tắt `active` (ghế đôi khóa cả cặp), ghế khóa gạch chéo. Cảnh báo khi rời trang chưa lưu |
 | **Loại ghế & phụ thu** | Bảng gọn | STANDARD / VIP / COUPLE (mã cố định): tên, phụ thu VND, màu (color picker hex); sửa inline |
 | **Nhân viên rạp** | Bảng + dialog | Cột: họ tên, email, vai trò (Nhân viên quầy / Quản lý rạp), trạng thái tài khoản, ngày gán, thao tác gỡ. "Thêm nhân viên" → nhập email (user phải đã đăng ký) → gán `TICKET_STAFF`. Quản lý rạp do ADMIN gán ở màn Người dùng |
-| **Người dùng – danh sách** | Bảng + tab | Tab trạng thái (Tất cả / Hoạt động / Chưa xác thực / Đã khóa), tìm theo email / tên, lọc role. Cột: họ tên + email, SĐT, vai trò (chips), trạng thái, lần đăng nhập cuối, ngày tạo. **Cần API danh sách** (backend chưa có) – trước mắt: ô tìm user theo id / email |
-| **Người dùng – chi tiết** | Setting `112:279` (tab) | Header: tên, email, badge trạng thái, nút **Khóa / Mở khóa** (dialog: "thu hồi mọi phiên đăng nhập"; ẩn với chính mình). Tab **Vai trò**: bảng role (tên role dịch, phạm vi, rạp nếu CINEMA, ngày gán, Gỡ – không cho tự gỡ ADMIN của mình) + nút **Gán vai trò** → dialog: chọn role → nếu role phạm vi CINEMA thì **bắt buộc chọn rạp**, role GLOBAL ẩn ô rạp. Tab Đặt vé (⏳) |
+| **Người dùng – danh sách** | Bảng + tab | Tab trạng thái (Tất cả / Hoạt động / Chưa xác thực / Đã khóa), tìm theo email / tên, lọc role. Cột: họ tên + email, SĐT, vai trò (chips), trạng thái, lần đăng nhập cuối, ngày tạo. Lọc rạp; bộ lọc giữ trong URL ✅ |
+| **Người dùng – chi tiết** | Setting `112:279` (tab) | Header: tên, email, badge trạng thái, nút **Khóa / Mở khóa** (dialog: "thu hồi mọi phiên đăng nhập"; ẩn với chính mình). Tab **Vai trò**: bảng role (tên role dịch, phạm vi, rạp nếu CINEMA, ngày gán, Gỡ – không cho tự gỡ ADMIN của mình) + nút **Gán vai trò** → dialog: chọn role → nếu role phạm vi CINEMA thì **bắt buộc chọn rạp**, role GLOBAL ẩn ô rạp. Tab Đặt vé (`BOOKING_VIEW_ALL`) ✅; nút Nhật ký thao tác (`AUDIT_LOG_VIEW`) |
 | **Vai trò & quyền** | màn mới | Trái: danh sách role (tên dịch, mã, phạm vi Toàn hệ thống / Theo rạp, số permission, badge "Hệ thống"). Phải: **ma trận** permission nhóm theo `module` (MOVIE, CINEMA, SHOWTIME, BOOKING, PAYMENT, PROMOTION, REPORT, USER, SYSTEM), mỗi dòng: tên permission dịch + mã + checkbox; "chọn cả nhóm". Role **ADMIN khóa** (chỉ xem, backend trả 409). Lưu → dialog liệt kê thêm / bớt, ghi chú "có hiệu lực sau ≤ 15 phút (lần refresh token kế tiếp)" → `PUT /roles/{id}/permissions` (gửi toàn bộ danh sách). Chế độ xem phụ: bảng ma trận role × permission để so sánh |
 
 ## 6. Khoảng trống backend cần cho UI
 (Đã ghi sang `cinema-backend/docs/project-context.md` – Bước tiếp theo.)
-- `GET /api/v1/users` phân trang + lọc (keyword, status, roleCode) – màn Người dùng.
-- `POST /api/v1/roles`, `PUT /api/v1/roles/{id}` (tên / mô tả), `DELETE /api/v1/roles/{id}` (chặn role hệ thống / đang dùng) – "admin tạo role mới không sửa code" (docs backend §3).
 - Hồ sơ cá nhân AUTH-07 (`PUT /auth/me`, avatar) – màn Tài khoản.
-- Showtime, booking, payment, voucher, product, banner, review, audit log – theo lộ trình backend.
+- Payment, check-in, hoàn tiền – theo lộ trình backend (đang tạm hoãn).
 
 ## 7. Figma – trạng thái và việc còn lại
 - 2026-10-28: Figma MCP đã cài (user scope, `https://mcp.figma.com/mcp`) và đọc được 2 file. **Gói Starter hết lượt gọi

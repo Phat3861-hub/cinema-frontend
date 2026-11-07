@@ -311,7 +311,8 @@ function CustomerCell({ booking }: { booking: Booking }) {
   );
 }
 
-function BookingDetailDialog({ booking, onClose }: { booking: Booking | null; onClose: () => void }) {
+/** Full booking (tickets, snacks, voucher, totals) with reprint; also used by the user detail screen. */
+export function BookingDetailDialog({ booking, onClose }: { booking: Booking | null; onClose: () => void }) {
   const t = useT();
   const { intlLocale } = useLocale();
   const showtime = booking?.showtime;

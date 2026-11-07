@@ -4,12 +4,20 @@
 > Cập nhật theo skill `/update-context` (rule CLAUDE.md §0). Ghi **trạng thái hiện tại**, không chép lại code hay git log.
 > Trạng thái backend / API đã sẵn sàng: `../cinema-backend/docs/project-context.md` (mục 4).
 >
-> **Cập nhật lần cuối:** 2026-11-04 (dashboard + báo cáo doanh thu; nhánh `feature/report-ui`)
+> **Cập nhật lần cuối:** 2026-11-07 (danh sách user, CRUD role, audit log; nhánh `feature/system-admin-ui`)
 
 ## 1. Trạng thái hiện tại
 - `feature/auth-ui`, `feature/ui-modules` (PR #2), `feature/booking-ui` (PR #3) đã merge. `feature/booking-counter-ui` (POS, đơn đặt vé
-  theo rạp, vé QR) đã commit, chờ PR; `feature/voucher-ui`, `feature/banner-offers-ui`, `feature/review-ui` đã commit + push. Nhánh **`feature/report-ui`**
-  (tách từ `feature/review-ui`), **chưa commit**: dashboard + báo cáo doanh thu (backend `feature/report`). Lint / typecheck / build xanh.
+  theo rạp, vé QR) đã commit, chờ PR; `feature/voucher-ui`, `feature/banner-offers-ui`, `feature/review-ui`, `feature/report-ui` đã commit + push. Nhánh **`feature/system-admin-ui`**
+  (tách từ `feature/report-ui`), **chưa commit**: danh sách user, CRUD role, audit log (backend `feature/system-admin`). Lint / typecheck / build xanh.
+- **Quản trị hệ thống**: `/admin/users` (`admin-users-screen.tsx`) tab trạng thái + tìm email / tên / SĐT + lọc vai trò / rạp, giữ trong URL
+  (`useUrlFilters`, trang bọc `<Suspense>`), chip vai trò kèm tên rạp, phân trang 20; danh sách vai trò lấy từ `/roles` nếu có `ROLE_MANAGE`, không thì
+  vai trò dựng sẵn. Chi tiết user: tab **Đơn đặt vé** (`BOOKING_VIEW_ALL`, lọc trạng thái, dùng lại `BookingDetailDialog`), nút **Nhật ký thao tác**
+  (`AUDIT_LOG_VIEW`) mở audit lọc theo user. `/admin/roles`: nút **Tạo vai trò** (mã tự viết hoa, kiểm tra `^[A-Za-z][A-Za-z0-9_]{1,49}$`, phạm vi + gợi ý),
+  role tự tạo có badge "Tự tạo", **Đổi tên** / **Xóa** (khóa khi `userCount > 0`); role CINEMA khóa quyền `cinemaScoped = false` (ghi chú "Chỉ dành cho vai
+  trò toàn hệ thống", quyền sai đã tick vẫn bỏ tick được). `/admin/audit-logs` (`features/audit`): lọc ngày / hành động (optgroup theo đối tượng) / đối tượng
+  + mã / email người làm / `actorId` trong URL; dòng mở rộng hiện bảng Trước / Sau theo nhãn field, danh sách quyền dạng Thêm / Bỏ, ngày giờ VN, `cinemaId`
+  → tên rạp, trace ID + nút sao chép; nút ⟲ lọc lịch sử của đối tượng.
 - **Báo cáo** (`features/report`): `/admin/reports` một bộ lọc cho cả trang (Hôm nay / 7 / 30 ngày / Tháng này / Tùy chọn ≤ 92 ngày, chọn rạp): 4 thẻ số có % so kỳ trước, 5 tab
   Tổng quan (cột chồng vé + bắp nước, bảng theo ngày có dòng tổng) · Theo phim (≤ 50) · Theo rạp (chỉ `REPORT_VIEW_ALL` và đang xem tất cả rạp) · Bắp nước (thanh tỷ trọng theo nhóm + bảng món) ·
   Kênh bán. Mỗi tab có **Xuất CSV** phía client (`csv.ts`: BOM cho Excel, chặn công thức `= + - @`). Không có `REPORT_VIEW_ALL` ⇒ không có "Tất cả rạp", 1 rạp thì ẩn bộ chọn. `/admin` hiện khối
@@ -96,7 +104,7 @@
 | Admin quầy vé | `/admin/pos`, `/admin/bookings` | Xong (chỉ tiền mặt) |
 | Admin kinh doanh | `/admin/products`, `/admin/vouchers`, `/admin/reports` | Xong |
 | Admin rạp | `/admin/cinemas(/new,/[id])`, `/admin/cinemas/[id]/rooms\|staff\|showtimes`, `/admin/rooms/[id]/layout`, `/admin/seat-types`; `/admin/rooms\|staff\|showtimes` chuyển tới rạp đang chọn | Xong |
-| Admin hệ thống | `/admin/users`, `/admin/users/[id]`, `/admin/roles` | Xong (user chỉ tra theo ID) |
+| Admin hệ thống | `/admin/users`, `/admin/users/[id]`, `/admin/roles`, `/admin/audit-logs` | Xong |
 
 Đã test trên Chrome 2026-10-31: home / chi tiết phim / chọn ghế (light + dark, vi + en); admin với ADMIN, CINEMA_MANAGER,
 TICKET_STAFF, CONTENT_MANAGER (menu đúng quyền, chặn URL không quyền, 403 rạp khác), tạo suất trùng giờ, lưu sơ đồ bị khóa
@@ -122,18 +130,19 @@ Chưa test: "Xem thêm" (> 10 đánh giá), lọc theo số sao ở trang phim.
 Đã test trên Chrome 2026-11-04 (báo cáo): ADMIN dashboard + 5 tab, đối chiếu tooltip và tổng kênh với DB, lọc rạp (tab Theo rạp tự ẩn), khoảng 92 ngày tự kẹp, CSV (tên file, BOM);
 `manager2` chỉ thấy rạp mình, không có bộ chọn rạp; en + dark; màn 390px bằng iframe (không tràn ngang). Sửa sau test: tiêu đề lặp, số trong bảng chưa phân cách hàng nghìn,
 en trùng nhãn `tickets` / `ticketRevenue` (lỗi trùng React key), "so với hôm qua" đổi thành "cả ngày hôm qua". Chưa test: phím ← → trên biểu đồ, tooltip khi chạm trên máy thật, file CSV mở bằng Excel.
+Đã test trên Chrome 2026-11-07 (quản trị hệ thống): ADMIN tạo role theo rạp (quyền toàn hệ thống bị khóa) → tick 2 quyền → lưu → xóa; audit log hiện đủ
+3 dòng của role (Thêm / Bỏ quyền, Trước / Sau, trace ID), lọc theo đối tượng qua URL; danh sách user lọc Quản lý rạp; tab Đơn đặt vé của customer1.
+Sửa sau test: phạm vi trong audit hiện mã thô `CINEMA`. Chưa test: en + light, lọc ngày / email ở audit, role đang gán (nút xóa khóa), màn hẹp.
 Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng trang vào iframe 390px.
 
 ## 4. Bước tiếp theo
-1. Chủ dự án review + commit nhánh `feature/report-ui` (lệnh PowerShell, không trailer Claude); thứ tự PR:
-   `feature/booking-counter-ui` → `feature/voucher-ui` → `feature/banner-offers-ui` → `feature/review-ui` → `feature/report-ui`.
+1. Chủ dự án review + commit nhánh `feature/system-admin-ui` (lệnh PowerShell, không trailer Claude); thứ tự PR:
+   `feature/booking-counter-ui` → `feature/voucher-ui` → `feature/banner-offers-ui` → `feature/review-ui` → `feature/report-ui` → `feature/system-admin-ui`.
 2. Upload ảnh banner khi backend có S3/MinIO (AUTH-07); hiện nhập URL https.
 3. **(Tạm hoãn)** Backend PR 3 (`feature/payment-vnpay`): bật nút Thanh toán, trang chờ kết quả + bước Vé (dùng `TicketCard`), POS thêm
    VNPay QR. Sau đó check-in QR (`/admin/check-in`), hoàn tiền.
-4. Tab Đặt vé trong chi tiết user (`/admin/users/[id]`, đang "Sắp có") – cần backend API booking theo user.
-5. Kiểm tra giao diện mobile (DevTools device mode) cho header/drawer, sidebar admin, bảng suất chiếu, trình thiết kế ghế, luồng đặt vé.
-6. Khi backend có API: danh sách user phân trang (thay màn tra theo ID), audit log.
-7. Backend trả mô tả role bằng tiếng Anh (`description`) → cần dịch theo `code` hoặc backend thêm bản vi.
+4. Kiểm tra giao diện mobile (DevTools device mode) cho header/drawer, sidebar admin, bảng suất chiếu, trình thiết kế ghế, luồng đặt vé.
+6. Backend trả mô tả role bằng tiếng Anh (`description`) → cần dịch theo `code` hoặc backend thêm bản vi.
 
 ## 5. Quyết định thiết kế
 | Ngày | Quyết định | Lý do |
@@ -153,6 +162,8 @@ Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng tran
 | 2026-11-02 | POS dùng endpoint **voucher-quote** rồi tự tính giảm giá ở client khi giỏ đổi; bán gửi `voucherCode` để backend kiểm tra lại | Thu ngân thấy số phải thu trước khi nhận tiền mặt, không giữ lượt của mã khi khách đổi ý |
 | 2026-11-02 | Carousel banner tự chuyển nhưng có nút tạm dừng, dừng khi hover / focus và tắt hẳn với `prefers-reduced-motion` | WCAG 2.2.2 (nội dung tự chuyển > 5 s phải dừng được) |
 | 2026-11-02 | Khu "Ưu đãi" trang chủ: không có voucher công khai ⇒ giữ 2 card tĩnh; banner lỗi / trống ⇒ hero phim nổi bật | Trang chủ không bao giờ trống khi chưa có nội dung |
+| 2026-11-07 | Audit log chỉ đọc, bảng + dòng mở rộng (không trang chi tiết); bộ lọc trong URL để link từ chi tiết user / nút lịch sử | Nhật ký không sửa được; deep-link được tới lịch sử của 1 đối tượng |
+| 2026-11-07 | Role CINEMA khóa quyền toàn hệ thống ở ma trận (theo `cinemaScoped` của backend) thay vì để backend trả lỗi | Chủ dự án chốt chặn leo quyền; người dùng thấy lý do ngay |
 | 2026-11-04 | Biểu đồ báo cáo tự vẽ bằng HTML / CSS, không thêm thư viện; CSV xuất phía client | Chủ dự án chốt; chỉ cần cột chồng và thanh, backend không phải thêm endpoint |
 | 2026-11-04 | Cột chồng là tiền **trước giảm giá**; tổng sau giảm nằm ở tooltip + bảng | Voucher áp cả đơn nên không chia được vào hai phần của cột; phụ đề biểu đồ ghi rõ |
 | 2026-11-03 | Chọn sao bằng 5 `input type="radio"` native (ẩn `sr-only`) vẽ thành icon sao | Bàn phím (mũi tên) + trình đọc màn hình đúng sẵn, không phải tự viết radiogroup ARIA |
@@ -160,6 +171,7 @@ Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng tran
 | 2026-10-30 | Validation client lặp lại rule DTO backend; `VALIDATION_FAILED` chỉ hiện "Giá trị không hợp lệ" theo field | Backend chưa trả mã lỗi theo field |
 
 ## 6. Vấn đề mở / lưu ý
+- Audit chỉ lưu id phim / phòng ⇒ hiện `#id`; rạp đổi ra tên nhờ danh sách rạp ở topbar. Trạng thái (`status`) trong Trước / Sau hiện mã gốc.
 - **Figma MCP gói Starter hết lượt gọi** → code theo `docs/ui-design.md`.
 - Ảnh nền auth `public/images/auth-cover.webp` lấy từ file Community, **chưa rõ giấy phép** – thay trước khi public.
 - Đã nâng **Next.js + eslint-config-next 16.4.0 → 16.4.3** (2026-11-01; 16.4.0 dính advisory critical: RCE Image Optimization với SVG,
@@ -184,6 +196,7 @@ Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng tran
 - Skill `ui-ux-pro-max` ở `.claude/skills/SKILL.md` thiếu thư mục riêng + `scripts/` → không nạp được.
 
 ## 7. Nhật ký session (mới nhất trên cùng, giữ tối đa 10 dòng)
+- **2026-11-07** – Báo cáo đã commit + push; nhánh `feature/system-admin-ui`: danh sách user có lọc, tab đơn đặt vé của user, tạo / đổi tên / xóa role + khóa quyền theo phạm vi, màn audit log (`features/audit`); test Chrome ADMIN, sửa 1 lỗi.
 - **2026-11-04** – Đánh giá đã commit + push; nhánh `feature/report-ui`: `features/report`, khối doanh thu ở `/admin`, màn `/admin/reports` 5 tab + xuất CSV; test Chrome ADMIN + manager2, sửa 4 lỗi.
 - **2026-11-03** – Banner + ưu đãi UI đã commit + push; nhánh `feature/review-ui`: khối đánh giá ở trang phim (tổng quan + lọc sao, viết / sửa / xóa, trạng thái bị ẩn), nút Đánh giá phim ở vé đã xem, màn admin kiểm duyệt; test Chrome customer1 + CONTENT_MANAGER, sửa 3 lỗi.
 - **2026-11-02** – Voucher UI đã commit + push; nhánh `feature/banner-offers-ui`: màn admin Banner (lọc, ↑/↓, ẩn/hiện, xem trước), carousel banner trang chủ, trang `/offers` + khu Ưu đãi trang chủ, ô `publicOffer` ở voucher; test Chrome CONTENT_MANAGER, sửa 2 lỗi giao diện.
@@ -193,4 +206,3 @@ Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng tran
 - **2026-10-31** – Nhánh `feature/ui-modules`: token ngữ nghĩa light/dark, i18n vi/en, bộ `components/ui`, màn khách hàng (home, phim, rạp, chọn ghế, tài khoản) + toàn bộ admin theo permission (phim, thể loại, rạp, phòng, sơ đồ ghế, loại ghế, suất chiếu, nhân sự, user, role). Seed dữ liệu test, test Chrome 4 role.
 - **2026-10-30** – Nhánh `feature/auth-ui`: token Ticketor + Manrope, api-client refresh single-flight, các màn auth, `AdminGuard`.
 - **2026-10-28** – Cài Figma MCP; đọc Figma Ticketor + BankDash; viết `docs/ui-design.md`. Chưa code.
-- **2026-10-13** – Thêm cơ chế project memory (file này + skill `/update-context`).
