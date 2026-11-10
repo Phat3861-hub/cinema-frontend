@@ -4,13 +4,16 @@
 > Cập nhật theo skill `/update-context` (rule CLAUDE.md §0). Ghi **trạng thái hiện tại**, không chép lại code hay git log.
 > Trạng thái backend / API đã sẵn sàng: `../cinema-backend/docs/project-context.md` (mục 4).
 >
-> **Cập nhật lần cuối:** 2026-11-07 (điểm thưởng; nhánh `feature/loyalty-ui`)
+> **Cập nhật lần cuối:** 2026-11-10 (lỗi 429 rate limit; nhánh `feature/hardening-ui`)
 
 ## 1. Trạng thái hiện tại
 - `feature/auth-ui`, `feature/ui-modules` (PR #2), `feature/booking-ui` (PR #3) đã merge. `feature/booking-counter-ui` (POS, đơn đặt vé
   theo rạp, vé QR) đã commit, chờ PR; `feature/voucher-ui`, `feature/banner-offers-ui`, `feature/review-ui`, `feature/report-ui` đã commit + push, `feature/system-admin-ui` đã commit.
-  `feature/notification-ui` (SYS-02) và `feature/profile-ui` (AUTH-07 + upload ảnh) đã commit. Nhánh **`feature/loyalty-ui`** (tách từ `feature/profile-ui`),
-  **chưa commit**: điểm thưởng PRO-02 + dùng điểm BOK-04 (backend `feature/loyalty`). Lint / typecheck / build xanh.
+  `feature/notification-ui` (SYS-02), `feature/profile-ui` (AUTH-07 + upload ảnh) và `feature/loyalty-ui` (PRO-02 + BOK-04) đã commit. Nhánh
+  **`feature/hardening-ui`** (tách từ `feature/loyalty-ui`), **chưa commit**: hiển thị lỗi 429 (backend `feature/hardening`). Lint / typecheck / build xanh.
+- **429 `TOO_MANY_REQUESTS`** (rate limit login / đăng ký / quên mật khẩu / gửi lại xác minh / upload ảnh + avatar): `getErrorMessage` đọc
+  `data.retryAfterSeconds` (`retryAfterSeconds()` trong `lib/error-messages.ts`) ⇒ "thử lại sau N giây" (< 60) hoặc "sau M phút" (`t.rateLimit.*`);
+  không có số thì dùng `t.errors.TOO_MANY_REQUESTS`. Mọi form đang dùng `getErrorMessage` nên tự có, không sửa từng form.
 - **Điểm thưởng** (`features/loyalty/`): `/points` (mục mới ở sidebar tài khoản + menu user) – thẻ số dư + quy đổi VND, 3 dòng quy tắc (lấy từ
   `GET /loyalty/me`), lịch sử phân trang 10 (`LoyaltyHistory`: icon theo type, mã đơn link tới vé, lý do + người chỉnh, ± điểm, số dư sau). Bước Thanh toán:
   `PointsBox` dưới `VoucherBox` – số dư (cộng lại điểm đơn đang dùng), mức tối đa của đơn (`maxPointsFor` trong `rules.ts`, cùng công thức backend),
@@ -165,9 +168,9 @@ phòng, ghế), bấm → `/my-tickets/{id}` + badge về 0; email Mailpit kèm 
 Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng trang vào iframe 390px.
 
 ## 4. Bước tiếp theo
-1. Chủ dự án review + commit nhánh `feature/loyalty-ui` (lệnh PowerShell, không trailer Claude); thứ tự PR:
+1. Chủ dự án review + commit nhánh `feature/hardening-ui` (lệnh PowerShell, không trailer Claude); thứ tự PR:
    `feature/booking-counter-ui` → `feature/voucher-ui` → `feature/banner-offers-ui` → `feature/review-ui` → `feature/report-ui` → `feature/system-admin-ui` → `feature/notification-ui`
-   → `feature/profile-ui` → `feature/loyalty-ui`. Test tay trên trình duyệt các mục ở §6 (hồ sơ / upload, điểm thưởng).
+   → `feature/profile-ui` → `feature/loyalty-ui` → `feature/hardening-ui`. Test tay trên trình duyệt các mục ở §6 (hồ sơ / upload, điểm thưởng, lỗi 429).
    Thông báo realtime (WebSocket STOMP sẵn có) chỉ cân nhắc khi poll 60 s không đủ.
 2. **(Tạm hoãn)** Backend PR 3 (`feature/payment-vnpay`): bật nút Thanh toán, trang chờ kết quả + bước Vé (dùng `TicketCard`), POS thêm
    VNPay QR. Sau đó check-in QR (`/admin/check-in`), hoàn tiền.
@@ -206,6 +209,9 @@ Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng tran
 | 2026-10-30 | Validation client lặp lại rule DTO backend; `VALIDATION_FAILED` chỉ hiện "Giá trị không hợp lệ" theo field | Backend chưa trả mã lỗi theo field |
 
 ## 6. Vấn đề mở / lưu ý
+- Thông báo 429 **chưa xem trên trình duyệt** (2026-11-10: Chrome đang đăng nhập sẵn nên `/login`, `/forgot-password` tự chuyển trang); backend đã test thật
+  (6 lần login sai ⇒ 429 `Retry-After: 897`). Cần thử tay ở cửa sổ chưa đăng nhập: login sai 6 lần ⇒ "thử lại sau 15 phút"; quên mật khẩu 4 lần cùng email.
+  Nút gửi chưa tự khóa / đếm ngược theo `Retry-After` – thêm nếu cần.
 - Điểm thưởng **chưa test trên trình duyệt** (không có công cụ trình duyệt trong session 2026-11-07): đã test API thật (online, quầy, hủy hoàn điểm). Cần thử tay:
   `/points`, ô dùng điểm + voucher cùng lúc, POS kiểm tra điểm / đổi email / đổi giỏ, tab điểm ở admin user, en, màn hẹp.
 - Hồ sơ / upload ảnh **chưa test trên trình duyệt** (Chrome extension mất kết nối 2026-11-07): đã test API thật + `/_next/image` với ảnh RustFS. Cần thử tay:
@@ -236,6 +242,7 @@ Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng tran
 - Skill `ui-ux-pro-max` ở `.claude/skills/SKILL.md` thiếu thư mục riêng + `scripts/` → không nạp được.
 
 ## 7. Nhật ký session (mới nhất trên cùng, giữ tối đa 10 dòng)
+- **2026-11-10** – Loyalty UI đã commit; nhánh `feature/hardening-ui`: lỗi 429 `TOO_MANY_REQUESTS` hiện "thử lại sau N giây / M phút" theo `data.retryAfterSeconds` ở mọi form (qua `getErrorMessage`), i18n vi / en; lint / typecheck / build xanh.
 - **2026-11-07** – Profile UI đã commit; nhánh `feature/loyalty-ui`: `/points` (số dư, quy tắc, lịch sử), ô dùng điểm ở bước thanh toán, dòng Voucher / Điểm tách riêng ở mọi chỗ hiện tiền, POS kiểm tra + dùng điểm, tab điểm + điều chỉnh ở admin user; lint / typecheck / build xanh (chưa test trình duyệt).
 - **2026-11-07** – Thông báo UI đã commit; nhánh `feature/profile-ui`: `/account` sửa hồ sơ + avatar (cắt ở canvas), `Avatar` hiện ảnh, `ImageUploadField` ở form banner / phim / bắp nước / rạp, `apiFetch` gửi FormData; lint / typecheck / build xanh, test API thật (chưa test trình duyệt).
 - **2026-11-07** – System admin UI đã commit; nhánh `feature/notification-ui`: `features/notification` (chuông + badge poll 60 s, dropdown portal, trang `/notifications` trong sidebar tài khoản, text i18n từ `type` + `data`); test Chrome với bán quầy thật + Mailpit.
@@ -245,4 +252,3 @@ Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng tran
 - **2026-11-02** – Voucher UI đã commit + push; nhánh `feature/banner-offers-ui`: màn admin Banner (lọc, ↑/↓, ẩn/hiện, xem trước), carousel banner trang chủ, trang `/offers` + khu Ưu đãi trang chủ, ô `publicOffer` ở voucher; test Chrome CONTENT_MANAGER, sửa 2 lỗi giao diện.
 - **2026-11-02** – Nhánh `feature/voucher-ui`: màn quản lý voucher (lọc, thêm/sửa, tạm dừng, xóa), áp mã ở bước Thanh toán, voucher ở POS (quote + tính lại tại chỗ), dòng giảm giá ở vé / biên nhận / chi tiết đơn; i18n mã lỗi `VOUCHER_*`.
 - **2026-11-02** – Nhánh `feature/booking-counter-ui`: POS cảm ứng (chọn suất, ghế lớn realtime, bắp nước, thu tiền mặt, in vé), đơn đặt vé theo rạp (lọc, tra mã, chi tiết, in lại), vé điện tử QR (`qrcode.react`), `PrintPortal`; sửa toast ghế bị lấy hiện 2 lần. Test Chrome ADMIN / staff2 / customer3, 2 tab POS.
-- **2026-11-01** – Nhánh `feature/booking-ui`: `@stomp/stompjs`, hook ghế realtime, luồng đặt vé (giữ ghế + đếm ngược, bắp nước, xem đơn, hủy), vé của tôi theo tab, admin bắp nước, i18n + mã lỗi booking. Test Chrome 2 tab. Nâng Next 16.4.3 (lỗ hổng), sửa hydration warning do extension.

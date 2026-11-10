@@ -709,7 +709,15 @@ export const en: Messages = {
     REVIEW_NOT_ELIGIBLE: "Only customers who watched the movie at our cinemas can review it.",
     REVIEW_HIDDEN: "This review was hidden by a moderator and can no longer be edited.",
     NETWORK_ERROR: "Can't reach the server. Check your connection and try again.",
+    TOO_MANY_REQUESTS: "Too many attempts. Please try again later.",
     FALLBACK: "Something went wrong. Please try again.",
+  },
+
+  rateLimit: {
+    retryInSeconds: (seconds: number) =>
+      `Too many attempts. Please try again in ${seconds} ${seconds === 1 ? "second" : "seconds"}.`,
+    retryInMinutes: (minutes: number) =>
+      `Too many attempts. Please try again in ${minutes} ${minutes === 1 ? "minute" : "minutes"}.`,
   },
 
   promotion: {
