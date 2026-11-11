@@ -711,7 +711,14 @@ export const vi = {
     REVIEW_NOT_ELIGIBLE: "Chỉ khách đã xem phim tại rạp mới có thể đánh giá.",
     REVIEW_HIDDEN: "Đánh giá đã bị kiểm duyệt viên ẩn nên không thể sửa.",
     NETWORK_ERROR: "Không kết nối được máy chủ. Kiểm tra mạng và thử lại.",
+    TOO_MANY_REQUESTS: "Bạn thao tác quá nhiều lần. Vui lòng thử lại sau.",
     FALLBACK: "Đã có lỗi xảy ra. Vui lòng thử lại.",
+  },
+
+  /** 429 TOO_MANY_REQUESTS with the wait the backend sent (`data.retryAfterSeconds`). */
+  rateLimit: {
+    retryInSeconds: (seconds: number) => `Bạn thao tác quá nhiều lần. Vui lòng thử lại sau ${seconds} giây.`,
+    retryInMinutes: (minutes: number) => `Bạn thao tác quá nhiều lần. Vui lòng thử lại sau ${minutes} phút.`,
   },
 
   promotion: {
