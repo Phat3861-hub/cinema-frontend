@@ -20,6 +20,7 @@ export const NETWORK_ERROR = "NETWORK_ERROR";
 export type QueryValue = string | number | boolean | null | undefined;
 
 type RequestOptions = Omit<RequestInit, "body"> & {
+  /** JSON-serialised, except FormData (multipart uploads), which is sent as is. */
   body?: unknown;
   /** Search params; empty values are dropped. */
   query?: Record<string, QueryValue>;
@@ -64,6 +65,8 @@ function refreshSession(): Promise<boolean> {
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { body, query, accessToken, headers, ...init } = options;
   const url = `${env.apiUrl}${path}${toSearch(query)}`;
+  // The browser sets the multipart Content-Type (with its boundary) itself
+  const isForm = typeof FormData !== "undefined" && body instanceof FormData;
 
   const send = () =>
     fetch(url, {
@@ -71,11 +74,11 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
       ...init,
       headers: {
         Accept: "application/json",
-        ...(body !== undefined && { "Content-Type": "application/json" }),
+        ...(body !== undefined && !isForm && { "Content-Type": "application/json" }),
         ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
         ...headers,
       },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
     });
 
   let res: Response;

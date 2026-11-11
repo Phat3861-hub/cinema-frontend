@@ -19,6 +19,7 @@ import { useToast } from "@/components/ui/toast";
 import { adminChecks, anyError, backendFieldErrors, optional, type Errors } from "@/features/admin/form-utils";
 import { productApi } from "@/features/booking/api";
 import { PRODUCT_CATEGORIES, type Product, type ProductCategory } from "@/features/booking/types";
+import { ImageUploadField } from "@/features/media/components/image-upload-field";
 import { useApi } from "@/hooks/use-api";
 import { useLocale, useT } from "@/i18n";
 import { getErrorMessage } from "@/lib/error-messages";
@@ -257,12 +258,12 @@ function ProductDialog({ product, onClose, onSaved }: { product?: Product; onClo
           error={errors.price}
         />
         <div className="sm:col-span-2">
-          <TextField
+          <ImageUploadField
+            purpose="PRODUCT"
             label={t.admin.products.imageUrl}
             optional
-            type="url"
             value={values.imageUrl}
-            onChange={set("imageUrl")}
+            onChange={(url) => setValues((v) => ({ ...v, imageUrl: url }))}
             error={errors.imageUrl}
           />
         </div>

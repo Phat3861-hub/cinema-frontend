@@ -6,17 +6,16 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { Avatar } from "@/components/layout/user-menu";
 import { Alert } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { PasswordField } from "@/components/ui/password-field";
 import { LoadingState } from "@/components/ui/states";
 import { useToast } from "@/components/ui/toast";
 import { ROUTES, withQuery } from "@/constants/routes";
+import { ProfileForm } from "@/features/account/components/profile-form";
 import { authApi } from "@/features/auth/api";
 import { PasswordRules } from "@/features/auth/components/password-rules";
 import { useSession } from "@/features/auth/components/session-provider";
-import { roleLabel } from "@/features/auth/permissions";
 import type { CurrentUser } from "@/features/auth/types";
 import {
   fieldMessage,
@@ -35,7 +34,7 @@ import { errorCodeOf, getErrorMessage } from "@/lib/error-messages";
 type Section = "account" | "tickets" | "notifications";
 
 /**
- * Profile sidebar (Ticketor Profile) + account info, change password, sign out of every device; the tickets section
+ * Profile sidebar (Ticketor Profile) + editable profile with avatar, change password, sign out of every device; the tickets section
  * shows the booking history, or one booking's e-tickets when `bookingId` is given; the notifications section lists
  * the in-app notifications.
  */
@@ -121,45 +120,9 @@ function AccountNav({ user, section }: { user: CurrentUser; section: Section }) 
 }
 
 function AccountDetails({ user }: { user: CurrentUser }) {
-  const t = useT();
-  const rows = [
-    { label: t.auth.fullName, value: user.fullName },
-    { label: t.auth.email, value: user.email },
-    { label: t.auth.phone, value: user.phone ?? "—" },
-  ];
-
   return (
     <div className="flex flex-col gap-6">
-      <section className="rounded-2xl border border-line bg-surface p-6" aria-labelledby="info-title">
-        <h1 id="info-title" className="text-h6 mb-5">
-          {t.account.info}
-        </h1>
-        <dl className="grid gap-4 sm:grid-cols-2">
-          {rows.map((row) => (
-            <div key={row.label} className="flex flex-col gap-1">
-              <dt className="text-xs font-semibold text-fg-muted">{row.label}</dt>
-              <dd className="font-semibold break-all">{row.value}</dd>
-            </div>
-          ))}
-          <div className="flex flex-col gap-1">
-            <dt className="text-xs font-semibold text-fg-muted">{t.account.status}</dt>
-            <dd>
-              <Badge tone={user.status === "ACTIVE" ? "success" : "warning"}>{t.userStatus[user.status]}</Badge>
-            </dd>
-          </div>
-          <div className="flex flex-col gap-1 sm:col-span-2">
-            <dt className="text-xs font-semibold text-fg-muted">{t.account.roles}</dt>
-            <dd className="flex flex-wrap gap-2">
-              {user.roles.map((role) => (
-                <Badge key={role.id} tone="accent">
-                  {roleLabel(role, t)}
-                </Badge>
-              ))}
-            </dd>
-          </div>
-        </dl>
-        <p className="mt-5 text-xs font-medium text-fg-subtle">{t.account.profileSoon}</p>
-      </section>
+      <ProfileForm user={user} />
       <ChangePassword />
       <LogoutEverywhere />
     </div>

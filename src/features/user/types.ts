@@ -6,6 +6,7 @@ export interface AdminUser {
   email: string;
   fullName: string;
   phone: string | null;
+  avatarUrl: string | null;
   status: UserStatus;
   emailVerifiedAt: string | null;
   lastLoginAt: string | null;

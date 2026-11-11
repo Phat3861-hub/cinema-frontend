@@ -17,6 +17,8 @@ import { Segmented } from "@/components/ui/tabs";
 import { TextField } from "@/components/ui/text-field";
 import { useToast } from "@/components/ui/toast";
 import { adminChecks, anyError, backendFieldErrors, optional, type Errors } from "@/features/admin/form-utils";
+import { ImageUploadField } from "@/features/media/components/image-upload-field";
+import { isUploadedImage } from "@/features/media/image-file";
 import { movieApi } from "@/features/movie/api";
 import { bannerApi } from "@/features/promotion/api";
 import {
@@ -33,7 +35,12 @@ import { getErrorMessage } from "@/lib/error-messages";
 import { addDays, formatDateTime, instantToVietnamTime, toIsoDate, todayInVietnam, vietnamToInstant } from "@/lib/format";
 
 /** Backend BannerRequest patterns. */
-const IMAGE_URL = /^https:\/\/\S+$/;
+const HTTPS_URL = /^https:\/\/\S+$/;
+
+/** Same rule as the backend's @HttpsImageUrl: https, or an image uploaded to our storage (http in dev). */
+function isBannerImage(url: string): boolean {
+  return HTTPS_URL.test(url) || isUploadedImage(url);
+}
 const LINK_URL = /^(\/(?!\/)\S*|https?:\/\/\S+)$/;
 
 const BANNER_STATE_TONES: Record<BannerState, BadgeTone> = {
@@ -341,7 +348,7 @@ function BannerDialog({ banner, onClose, onSaved }: { banner?: Banner; onClose: 
       imageUrl:
         check.required(imageUrl) ??
         check.maxLength(imageUrl, 500) ??
-        (IMAGE_URL.test(imageUrl) ? undefined : t.admin.banners.imageHttps),
+        (isBannerImage(imageUrl) ? undefined : t.admin.banners.imageHttps),
       movieId: linkType === "MOVIE" && !values.movieId ? t.admin.banners.movieRequired : undefined,
       linkUrl:
         linkType === "URL"
@@ -408,7 +415,7 @@ function BannerDialog({ banner, onClose, onSaved }: { banner?: Banner; onClose: 
         )}
         <div className="flex flex-col gap-2 sm:col-span-2">
           <div className="relative aspect-[8/3] w-full overflow-hidden rounded-lg border border-line bg-black">
-            <CoverImage src={IMAGE_URL.test(imageUrl) ? imageUrl : null} alt={t.admin.banners.imagePreview} sizes="640px" />
+            <CoverImage src={isBannerImage(imageUrl) ? imageUrl : null} alt={t.admin.banners.imagePreview} sizes="640px" />
             {values.title.trim() && (
               <div className="absolute inset-0 flex flex-col justify-end bg-linear-to-t from-black/80 via-black/20 to-transparent p-4 text-white">
                 <p className="line-clamp-1 text-lg font-bold">{values.title}</p>
@@ -418,14 +425,12 @@ function BannerDialog({ banner, onClose, onSaved }: { banner?: Banner; onClose: 
           </div>
         </div>
         <div className="sm:col-span-2">
-          <TextField
+          <ImageUploadField
+            purpose="BANNER"
             label={t.admin.banners.imageUrl}
             required
-            type="url"
             value={values.imageUrl}
-            maxLength={500}
-            onChange={set("imageUrl")}
-            placeholder="https://"
+            onChange={(url) => setValues((v) => ({ ...v, imageUrl: url }))}
             hint={t.admin.banners.imageHint}
             error={errors.imageUrl}
           />

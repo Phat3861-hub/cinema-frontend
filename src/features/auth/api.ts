@@ -7,6 +7,7 @@ import type {
   RegisteredUser,
   RegisterRequest,
   ResetPasswordRequest,
+  UpdateProfileRequest,
 } from "@/features/auth/types";
 
 /** `/api/v1/auth/*` – the backend sets / clears the HttpOnly cookies itself. */
@@ -22,6 +23,14 @@ export const authApi = {
   me: () => apiFetch<CurrentUser>("/auth/me"),
   logout: () => apiFetch<void>("/auth/logout", { method: "POST" }),
   logoutAll: () => apiFetch<void>("/auth/logout-all", { method: "POST" }),
+  updateProfile: (body: UpdateProfileRequest) => apiFetch<CurrentUser>("/auth/me", { method: "PUT", body }),
+  /** The backend crops it to a square, resizes it to 256 px and deletes the previous avatar. */
+  uploadAvatar: (file: Blob) => {
+    const body = new FormData();
+    body.append("file", file, "avatar.jpg");
+    return apiFetch<CurrentUser>("/auth/me/avatar", { method: "POST", body });
+  },
+  removeAvatar: () => apiFetch<CurrentUser>("/auth/me/avatar", { method: "DELETE" }),
   /** Revokes the other sessions and issues new cookies for this device. */
   changePassword: (body: ChangePasswordRequest) =>
     apiFetch<AuthSession>("/auth/change-password", { method: "POST", body }),
