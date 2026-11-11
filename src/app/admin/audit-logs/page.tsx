@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
-import { PagePlaceholder } from "@/components/layout/page-placeholder";
+import { Suspense } from "react";
+import { LoadingState } from "@/components/ui/states";
+import { AdminAuditLogsScreen } from "@/features/audit/components/admin-audit-logs-screen";
 
-export const metadata: Metadata = { title: "Audit log" };
+export const metadata: Metadata = { title: "Nhật ký thao tác" };
 
-export default function Page() {
-  return <PagePlaceholder title="admin.menu.auditLogs" description="admin.soon.auditLogs" />;
+export default function AdminAuditLogsPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <AdminAuditLogsScreen />
+    </Suspense>
+  );
 }

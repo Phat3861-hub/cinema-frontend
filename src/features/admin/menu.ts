@@ -132,7 +132,7 @@ export const ADMIN_MENU: AdminMenuGroup[] = [
     items: [
       { key: "users", href: ROUTES.admin.users, icon: Users, permissions: ["USER_MANAGE"], match: /^\/admin\/users\// },
       { key: "roles", href: ROUTES.admin.roles, icon: ShieldCheck, permissions: ["ROLE_MANAGE"] },
-      { key: "auditLogs", href: ROUTES.admin.auditLogs, icon: FileClock, permissions: ["AUDIT_LOG_VIEW"], soon: true },
+      { key: "auditLogs", href: ROUTES.admin.auditLogs, icon: FileClock, permissions: ["AUDIT_LOG_VIEW"] },
     ],
   },
 ];

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Lock, LockOpen, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Eye, FileClock, Lock, LockOpen, Plus, ReceiptText, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { Avatar } from "@/components/layout/user-menu";
@@ -10,8 +10,10 @@ import { Button, buttonClasses } from "@/components/ui/button";
 import { Card, IconButton } from "@/components/ui/card";
 import { ConfirmDialog, Dialog } from "@/components/ui/dialog";
 import { SelectField } from "@/components/ui/select-field";
+import { Pagination } from "@/components/ui/pagination";
+import { Select } from "@/components/ui/select-field";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
-import { Table, Td, Th } from "@/components/ui/table";
+import { Table, TableSkeleton, Td, Th } from "@/components/ui/table";
 import { Tabs } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/toast";
 import { ROUTES } from "@/constants/routes";
@@ -19,20 +21,26 @@ import { useAdminCinema } from "@/features/admin/cinema-context";
 import { useSession } from "@/features/auth/components/session-provider";
 import { hasAny, roleLabel } from "@/features/auth/permissions";
 import type { UserRole } from "@/features/auth/types";
+import { BookingDetailDialog } from "@/features/booking/components/admin-bookings-screen";
+import { BOOKING_STATUS_TONES } from "@/features/booking/components/my-bookings";
+import { BOOKING_STATUSES, type Booking, type BookingStatus } from "@/features/booking/types";
 import { rbacApi, userApi } from "@/features/user/api";
 import type { UserDetail } from "@/features/user/types";
 import { useApi } from "@/hooks/use-api";
 import { useLocale, useT } from "@/i18n";
 import { getErrorMessage } from "@/lib/error-messages";
-import { formatDate, formatDateTime } from "@/lib/format";
+import { formatDate, formatDateTime, formatVnd } from "@/lib/format";
 
 const STATUS_TONE = { ACTIVE: "success", PENDING: "warning", LOCKED: "danger" } as const;
+const BOOKINGS_PAGE_SIZE = 10;
 
-/** BankDash Setting layout: header with lock / unlock, tabs Roles · Bookings (bookings wait for the booking API). */
+/** BankDash Setting layout: header with lock / unlock, tabs Roles · Bookings (BOOKING_VIEW_ALL). */
 export function AdminUserDetail({ userId }: { userId: string }) {
   const t = useT();
+  const { user: me } = useSession();
   const detail = useApi(`user:${userId}`, () => userApi.get(userId));
   const [tab, setTab] = useState<"roles" | "bookings">("roles");
+  const canSeeBookings = hasAny(me, ["BOOKING_VIEW_ALL"]);
 
   if (detail.error && !detail.data) return <ErrorState error={detail.error} onRetry={detail.reload} />;
   if (!detail.data) return <LoadingState />;
@@ -51,13 +59,13 @@ export function AdminUserDetail({ userId }: { userId: string }) {
           onChange={setTab}
           items={[
             { value: "roles", label: t.admin.users.rolesTab, count: detail.data.roles.length },
-            { value: "bookings", label: t.admin.users.bookingsTab },
+            ...(canSeeBookings ? [{ value: "bookings" as const, label: t.admin.users.bookingsTab }] : []),
           ]}
         />
-        {tab === "roles" ? (
-          <Roles detail={detail.data} onChange={(roles) => detail.setData((d) => (d ? { ...d, roles } : d))} />
+        {tab === "bookings" && canSeeBookings ? (
+          <UserBookings userId={detail.data.user.id} />
         ) : (
-          <EmptyState title={t.common.comingSoon} description={t.admin.soon.bookings} />
+          <Roles detail={detail.data} onChange={(roles) => detail.setData((d) => (d ? { ...d, roles } : d))} />
         )}
       </Card>
     </div>
@@ -108,12 +116,23 @@ function Header({ detail, onChange }: { detail: UserDetail; onChange: (detail: U
           </div>
           <p className="truncate text-sm font-medium text-fg-muted">{user.email}</p>
         </div>
-        {!self && (
-          <Button variant={locked ? "outline" : "danger"} size="md" onClick={() => setConfirming(true)}>
-            {locked ? <LockOpen aria-hidden className="size-4" /> : <Lock aria-hidden className="size-4" />}
-            {locked ? t.admin.users.unlock : t.admin.users.lock}
-          </Button>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {hasAny(me, ["AUDIT_LOG_VIEW"]) && (
+            <Link
+              href={`${ROUTES.admin.auditLogs}?entityType=USER&entityId=${user.id}`}
+              className={buttonClasses({ variant: "outline", size: "md" })}
+            >
+              <FileClock aria-hidden className="size-4" />
+              {t.admin.users.viewAudit}
+            </Link>
+          )}
+          {!self && (
+            <Button variant={locked ? "outline" : "danger"} size="md" onClick={() => setConfirming(true)}>
+              {locked ? <LockOpen aria-hidden className="size-4" /> : <Lock aria-hidden className="size-4" />}
+              {locked ? t.admin.users.unlock : t.admin.users.lock}
+            </Button>
+          )}
+        </div>
       </div>
       <dl className="grid gap-4 border-t border-line pt-5 sm:grid-cols-2 lg:grid-cols-4">
         {facts.map((fact) => (
@@ -134,6 +153,111 @@ function Header({ detail, onChange }: { detail: UserDetail; onChange: (detail: U
         confirmLabel={locked ? t.admin.users.unlock : t.admin.users.lock}
       />
     </Card>
+  );
+}
+
+/** Bookings of the account (online and counter sales tied to it), newest first, with the staff booking dialog. */
+function UserBookings({ userId }: { userId: number }) {
+  const t = useT();
+  const { intlLocale } = useLocale();
+  const [status, setStatus] = useState<BookingStatus | "">("");
+  const [page, setPage] = useState(0);
+  const [detail, setDetail] = useState<Booking | null>(null);
+  const query = { status: status || undefined, page, size: BOOKINGS_PAGE_SIZE };
+  const bookings = useApi(`user:${userId}:bookings:${JSON.stringify(query)}`, () => userApi.bookings(userId, query));
+  const list = bookings.data?.content ?? [];
+
+  return (
+    <>
+      <div className="flex justify-end">
+        <Select
+          aria-label={t.admin.common.status}
+          value={status}
+          onChange={(event) => {
+            setStatus(event.target.value as BookingStatus | "");
+            setPage(0);
+          }}
+          className="w-full sm:w-56"
+        >
+          <option value="">{t.common.all}</option>
+          {BOOKING_STATUSES.map((value) => (
+            <option key={value} value={value}>
+              {t.booking.status[value]}
+            </option>
+          ))}
+        </Select>
+      </div>
+      {bookings.error && !bookings.data ? (
+        <ErrorState error={bookings.error} onRetry={bookings.reload} />
+      ) : bookings.data && list.length === 0 ? (
+        <EmptyState icon={ReceiptText} title={t.admin.users.bookingsEmpty} />
+      ) : (
+        <Table className="min-w-[840px]">
+          <thead>
+            <tr>
+              <Th>{t.booking.bookingCode}</Th>
+              <Th>{t.booking.time}</Th>
+              <Th>{t.booking.seats}</Th>
+              <Th>{t.admin.bookings.channel}</Th>
+              <Th className="text-right">{t.booking.totalToPay}</Th>
+              <Th>{t.admin.common.status}</Th>
+              <Th>{t.admin.bookings.createdAt}</Th>
+              <Th className="text-right">{t.admin.common.actions}</Th>
+            </tr>
+          </thead>
+          {!bookings.data ? (
+            <TableSkeleton columns={8} />
+          ) : (
+            <tbody>
+              {list.map((booking) => (
+                <tr key={booking.id} className="hover:bg-surface-2/50">
+                  <Td className="font-mono font-bold text-fg">{booking.bookingCode}</Td>
+                  <Td>
+                    {booking.showtime ? (
+                      <div className="min-w-0">
+                        <p className="font-semibold text-fg">{booking.showtime.movie.title}</p>
+                        <p className="text-xs text-fg-muted">
+                          {formatDateTime(booking.showtime.startTime, intlLocale)} · {booking.showtime.cinema.name}
+                        </p>
+                      </div>
+                    ) : (
+                      <span className="text-fg-subtle">–</span>
+                    )}
+                  </Td>
+                  <Td>
+                    {booking.tickets.map((ticket) => ticket.seatCode).join(", ") ||
+                      booking.seats.map((seat) => seat.seatCode).join(", ") ||
+                      "–"}
+                  </Td>
+                  <Td>
+                    <Badge tone={booking.channel === "COUNTER" ? "accent" : "info"}>{t.booking.channel[booking.channel]}</Badge>
+                  </Td>
+                  <Td className="text-right font-semibold whitespace-nowrap text-fg tabular-nums">
+                    {formatVnd(booking.totalAmount, intlLocale)}
+                  </Td>
+                  <Td>
+                    <Badge tone={BOOKING_STATUS_TONES[booking.status]}>{t.booking.status[booking.status]}</Badge>
+                  </Td>
+                  <Td className="whitespace-nowrap">{formatDateTime(booking.createdAt, intlLocale)}</Td>
+                  <Td className="text-right">
+                    <IconButton label={t.admin.bookings.view(booking.bookingCode)} onClick={() => setDetail(booking)}>
+                      <Eye aria-hidden className="size-4" />
+                    </IconButton>
+                  </Td>
+                </tr>
+              ))}
+            </tbody>
+          )}
+        </Table>
+      )}
+      {bookings.data && list.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs font-semibold text-fg-muted">{t.admin.users.bookingsTotal(bookings.data.totalElements)}</p>
+          <Pagination page={bookings.data.page} totalPages={bookings.data.totalPages} onChange={setPage} />
+        </div>
+      )}
+      <BookingDetailDialog booking={detail} onClose={() => setDetail(null)} />
+    </>
   );
 }
 
