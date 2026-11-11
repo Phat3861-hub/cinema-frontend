@@ -24,6 +24,11 @@ export const movieApi = {
   create: (body: MovieRequest) => apiFetch<Movie>("/movies", { method: "POST", body }),
   update: (movieId: number, body: MovieRequest) => apiFetch<Movie>(`/movies/${movieId}`, { method: "PUT", body }),
   remove: (movieId: number) => apiFetch<void>(`/movies/${movieId}`, { method: "DELETE" }),
+  /** Best sellers of the last 7 days (public, cached by the backend for a few minutes). */
+  trending: (limit = 10) => apiFetch<MovieSummary[]>("/movies/trending", { query: { limit } }),
+  /** Signed in: by the genres of what I booked / marked; `personalized = false` means these are just the trending ones. */
+  recommended: (limit = 10) =>
+    apiFetch<{ personalized: boolean; movies: MovieSummary[] }>("/recommendations/movies", { query: { limit } }),
 };
 
 export const genreApi = {

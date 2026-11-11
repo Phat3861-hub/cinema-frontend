@@ -4,14 +4,17 @@
 > Cập nhật theo skill `/update-context` (rule CLAUDE.md §0). Ghi **trạng thái hiện tại**, không chép lại code hay git log.
 > Trạng thái backend / API đã sẵn sàng: `../cinema-backend/docs/project-context.md` (mục 4).
 >
-> **Cập nhật lần cuối:** 2026-11-11 (phim yêu thích; nhánh `feature/favorites-ui`)
+> **Cập nhật lần cuối:** 2026-11-11 (phim hot + gợi ý; nhánh `feature/discovery-ui`)
 
 ## 1. Trạng thái hiện tại
-- `feature/auth-ui`, `feature/ui-modules` (PR #2), `feature/booking-ui` (PR #3) đã merge. `feature/booking-counter-ui` (POS, đơn đặt vé
-  theo rạp, vé QR) đã commit, chờ PR; `feature/voucher-ui`, `feature/banner-offers-ui`, `feature/review-ui`, `feature/report-ui` đã commit + push, `feature/system-admin-ui` đã commit.
+- `feature/auth-ui`, `feature/ui-modules` (PR #2), `feature/booking-ui` (PR #3), `feature/booking-counter-ui` → `feature/report-ui` (PR #4–#8) đã merge vào
+  `develop` (kiểm tra 2026-11-11). `feature/system-admin-ui` đã commit + push, chờ PR (PR kế tiếp).
   `feature/notification-ui` (SYS-02), `feature/profile-ui` (AUTH-07 + upload ảnh), `feature/loyalty-ui` (PRO-02 + BOK-04) và `feature/hardening-ui` (lỗi 429)
-  và `feature/notification-prefs-ui` (đợt 1 phần khách hàng) đã commit. Nhánh **`feature/favorites-ui`** (tách từ `feature/notification-prefs-ui`), **chưa commit**:
-  đợt 2 của kế hoạch phần khách hàng (kế hoạch 5 đợt ở `cinema-backend/docs/project-context.md` §5, backend `feature/favorites`). Lint / typecheck / build xanh.
+  `feature/notification-prefs-ui` và `feature/favorites-ui` (đợt 1 + 2 phần khách hàng) đã commit. Nhánh **`feature/discovery-ui`** (tách từ `feature/favorites-ui`),
+  **chưa commit**: đợt 3 của kế hoạch phần khách hàng (kế hoạch 5 đợt ở `cinema-backend/docs/project-context.md` §5, backend `feature/discovery`). Lint / typecheck / build xanh.
+- **Phim hot + gợi ý** (trang chủ, `home-screen.tsx`): sau hero có hàng **Phim hot tuần này** (`movieApi.trending(5)`, số hạng tròn vàng giữa đỉnh áp phích – góc trái là
+  nhãn tuổi, góc phải là trái tim) và hàng **Gợi ý cho bạn** (`movieApi.recommended(5)`, chỉ khi đã đăng nhập **và** `personalized = true`); cả hai ẩn khi đang tải /
+  lỗi / rỗng (không thiết yếu), dùng chung `MovieRow`. "Rạp gần tôi" đã có sẵn ở `/cinemas` từ trước.
 - **Phim yêu thích** (`features/movie`): `useFavorites()` (`hooks/use-favorites.ts`) = store cấp module (`useSyncExternalStore`) giữ tập id yêu thích của user,
   tải 1 lần / user từ `GET /favorites/movie-ids`, `toggle` lạc quan (lỗi ⇒ trả lại + ném lỗi). `FavoriteButton`: `overlay` (nút tròn trên áp phích ở `MovieCard`,
   là **anh em** của `<Link>` trong một `div.relative`, không lồng nút trong link) và `button` (nút "Yêu thích / Đã yêu thích" ở hero trang phim); `aria-pressed`,
@@ -186,13 +189,16 @@ link trong email Mailpit → `/unsubscribe` → "Đăng ký lại". Chưa test: 
 (API) ⇒ chuông tăng, dropdown có **1** thông báo "Phim yêu thích đã mở bán vé"; trang phim hiện nút "Đã yêu thích". Chưa test: bỏ tim ở `/favorites`, khách chưa
 đăng nhập bấm tim, en + dark, màn hẹp, email mở bán trong Mailpit (đã có dòng PENDING trong outbox). **Không chạy `npm run build` khi dev server đang chạy**
 (ghi đè `.next` ⇒ dev server báo "Jest worker encountered … exceptions"; khởi động lại là hết).
+Đã test trên Chrome 2026-11-11 (phim hot + gợi ý, manager2): trang chủ có hàng "Phim hot tuần này" đúng thứ tự vé bán trong DB (Dune 7 vé, Mai 3 vé) kèm số hạng;
+"Gợi ý cho bạn" hiện 3 phim cùng thể loại với phim đã mua vé (Mai) / yêu thích (Galactic Rangers), không gồm 2 phim đó. Chưa test: khách chưa đăng nhập (hàng gợi ý
+phải ẩn), tài khoản chưa có lịch sử, en + dark, màn hẹp.
 Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng trang vào iframe 390px.
 
 ## 4. Bước tiếp theo
-1. Chủ dự án review + commit nhánh `feature/favorites-ui` (lệnh PowerShell, không trailer Claude); sau đó đợt 3 `feature/discovery-ui`
-   (hàng "Phim hot" + "Gợi ý cho bạn" ở trang chủ, nút "Gần tôi" ở `/cinemas`). Thứ tự PR:
-   `feature/booking-counter-ui` → `feature/voucher-ui` → `feature/banner-offers-ui` → `feature/review-ui` → `feature/report-ui` → `feature/system-admin-ui` → `feature/notification-ui`
-   → `feature/profile-ui` → `feature/loyalty-ui` → `feature/hardening-ui` → `feature/notification-prefs-ui` → `feature/favorites-ui`. Test tay trên trình duyệt các mục ở §6
+1. Chủ dự án review + commit nhánh `feature/discovery-ui` (lệnh PowerShell, không trailer Claude); sau đó đợt 4 `feature/movie-media-ui`
+   (thư viện ảnh + diễn viên ở trang phim, quản lý ảnh / diễn viên ở form phim admin). Thứ tự PR:
+   (đã merge tới `feature/report-ui`, PR #8) `feature/system-admin-ui` → `feature/notification-ui`
+   → `feature/profile-ui` → `feature/loyalty-ui` → `feature/hardening-ui` → `feature/notification-prefs-ui` → `feature/favorites-ui` → `feature/discovery-ui`. Test tay trên trình duyệt các mục ở §6
    (hồ sơ / upload, điểm thưởng, lỗi 429).
 2. **(Tạm hoãn)** Backend PR 3 (`feature/payment-vnpay`): bật nút Thanh toán, trang chờ kết quả + bước Vé (dùng `TicketCard`), POS thêm
    VNPay QR. Sau đó check-in QR (`/admin/check-in`), hoàn tiền.
@@ -228,6 +234,7 @@ Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng tran
 | 2026-11-07 | `dangerouslyAllowLocalIP` chỉ bật khi `NODE_ENV=development` | Ảnh dev nằm ở localhost:9000; production dùng storage / CDN công khai nên giữ chặn SSRF |
 | 2026-11-07 | Công thức điểm (`maxPointsFor`, `pointsEarnedFor`) lặp ở FE (`features/loyalty/rules.ts`) | Hiện mức tối đa / số điểm sẽ tích ngay, không gọi API mỗi lần đổi giỏ; backend vẫn kiểm tra lại |
 | 2026-11-07 | Trang điểm là route riêng `/points` trong khung tài khoản (như `/notifications`) | Link trực tiếp được, sidebar giữ trạng thái chọn |
+| 2026-11-11 | Hàng gợi ý ẩn khi backend trả `personalized = false` (thay vì hiện lại phim hot dưới tên khác) | Không lặp 2 hàng giống nhau; khách mới chỉ thấy "Phim hot" |
 | 2026-11-11 | Trạng thái yêu thích giữ ở store cấp module dùng chung cho mọi trái tim, không gọi API theo từng thẻ | 1 request cho cả trang; thẻ ở trang chủ, danh sách, trang yêu thích luôn khớp nhau |
 | 2026-11-11 | Trái tim hiện với cả khách chưa đăng nhập (bấm ⇒ đăng nhập rồi quay lại) | Gợi ý tính năng; không ẩn theo quyền vì mọi tài khoản đều dùng được |
 | 2026-11-11 | Kết nối realtime thông báo đặt trong `NotificationBell`, chỉ báo "có thay đổi" rồi tải lại qua REST | Mỗi trang có đúng 1 chuông ⇒ 1 kết nối; dùng lại cơ chế `notifications:changed` sẵn có, mất kết nối vẫn đúng nhờ poll |
@@ -271,6 +278,7 @@ Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng tran
 - Skill `ui-ux-pro-max` ở `.claude/skills/SKILL.md` thiếu thư mục riêng + `scripts/` → không nạp được.
 
 ## 7. Nhật ký session (mới nhất trên cùng, giữ tối đa 10 dòng)
+- **2026-11-11** – Favorites UI đã commit; nhánh `feature/discovery-ui` (đợt 3): hàng "Phim hot tuần này" (có số hạng) + "Gợi ý cho bạn" ở trang chủ; test Chrome manager2, đối chiếu DB; lint / typecheck / build xanh.
 - **2026-11-11** – Notification prefs UI đã commit; nhánh `feature/favorites-ui` (đợt 2): trái tim ở thẻ phim + trang phim, trang `/favorites`, thông báo `MOVIE_ON_SALE`; test Chrome manager2 (tim ở thẻ + trang phim, `/favorites`, thông báo mở bán sau khi tạo suất đầu tiên); lint / typecheck / build xanh.
 - **2026-11-11** – Hardening UI đã commit; nhánh `feature/notification-prefs-ui` (đợt 1 phần khách hàng): khối cài đặt thông báo ở `/notifications`, trang `/unsubscribe`, thông báo realtime qua STOMP, câu điểm tích được; test Chrome manager2 + bán quầy thật + Mailpit; lint / typecheck / build xanh.
 - **2026-11-10** – Loyalty UI đã commit; nhánh `feature/hardening-ui`: lỗi 429 `TOO_MANY_REQUESTS` hiện "thử lại sau N giây / M phút" theo `data.retryAfterSeconds` ở mọi form (qua `getErrorMessage`), i18n vi / en; lint / typecheck / build xanh.
@@ -280,4 +288,3 @@ Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng tran
 - **2026-11-07** – Báo cáo đã commit + push; nhánh `feature/system-admin-ui`: danh sách user có lọc, tab đơn đặt vé của user, tạo / đổi tên / xóa role + khóa quyền theo phạm vi, màn audit log (`features/audit`); test Chrome ADMIN, sửa 1 lỗi.
 - **2026-11-04** – Đánh giá đã commit + push; nhánh `feature/report-ui`: `features/report`, khối doanh thu ở `/admin`, màn `/admin/reports` 5 tab + xuất CSV; test Chrome ADMIN + manager2, sửa 4 lỗi.
 - **2026-11-03** – Banner + ưu đãi UI đã commit + push; nhánh `feature/review-ui`: khối đánh giá ở trang phim (tổng quan + lọc sao, viết / sửa / xóa, trạng thái bị ẩn), nút Đánh giá phim ở vé đã xem, màn admin kiểm duyệt; test Chrome customer1 + CONTENT_MANAGER, sửa 3 lỗi.
-- **2026-11-02** – Voucher UI đã commit + push; nhánh `feature/banner-offers-ui`: màn admin Banner (lọc, ↑/↓, ẩn/hiện, xem trước), carousel banner trang chủ, trang `/offers` + khu Ưu đãi trang chủ, ô `publicOffer` ở voucher; test Chrome CONTENT_MANAGER, sửa 2 lỗi giao diện.

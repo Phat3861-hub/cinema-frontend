@@ -1,11 +1,12 @@
 "use client";
 
-import { ArrowRight, Clock, Gift, Play, Popcorn, Ticket } from "lucide-react";
+import { ArrowRight, Clock, Flame, Gift, Play, Popcorn, Sparkles, Ticket, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { buttonClasses } from "@/components/ui/button";
 import { CoverImage } from "@/components/ui/cover-image";
 import { ErrorState, Skeleton } from "@/components/ui/states";
 import { ROUTES, withQuery } from "@/constants/routes";
+import { useSession } from "@/features/auth/components/session-provider";
 import { movieApi } from "@/features/movie/api";
 import { AgeBadge, Rating } from "@/features/movie/components/movie-badges";
 import { MovieCard, MovieCardSkeleton, MovieGrid } from "@/features/movie/components/movie-card";
@@ -21,8 +22,13 @@ import type { PageResponse } from "@/types/api";
 const SECTION = "mx-auto w-full max-w-[1232px] px-4";
 
 const HOME_OFFERS = 4;
+/** One row of the movie grid on the widest layout. */
+const ROW = 5;
 
-/** Ticketor Home: hero, now showing, coming soon, offers, FAQ (stats / partners / app blocks dropped). */
+/**
+ * Ticketor Home: hero, trending, suggestions for the signed-in user, now showing, coming soon, offers, FAQ (stats /
+ * partners / app blocks dropped).
+ */
 export function HomeScreen() {
   const nowShowing = useApi("home:now", () => movieApi.search({ status: "NOW_SHOWING", size: 10, sort: "releaseDate,desc" }));
   const banners = useApi("home:banners", () => bannerApi.listShowing());
@@ -38,6 +44,8 @@ export function HomeScreen() {
       ) : (
         <Hero movie={nowShowing.data?.content[0]} loading={!bannersSettled || (nowShowing.loading && !nowShowing.data)} />
       )}
+      <TrendingSection />
+      <RecommendedSection />
       <MovieSection status="NOW_SHOWING" result={nowShowing} />
       <ComingSoonSection />
       <Offers />
@@ -165,6 +173,85 @@ function MovieSection({
         </p>
       )}
     </section>
+  );
+}
+
+/** A titled row of movie cards without a "see all" link; `ranked` numbers the posters. */
+function MovieRow({
+  id,
+  icon: Icon,
+  title,
+  hint,
+  movies,
+  ranked = false,
+}: {
+  id: string;
+  icon: LucideIcon;
+  title: string;
+  hint: string;
+  movies: MovieSummary[];
+  ranked?: boolean;
+}) {
+  const t = useT();
+  return (
+    <section className={SECTION} aria-labelledby={id}>
+      <div className="mb-6">
+        <h2 id={id} className="text-h6 flex items-center gap-2">
+          <Icon aria-hidden className="size-6 text-accent" />
+          {title}
+        </h2>
+        <p className="mt-1 text-sm font-medium text-fg-muted">{hint}</p>
+      </div>
+      <MovieGrid>
+        {movies.map((movie, index) => (
+          <div key={movie.id} className="relative">
+            <MovieCard movie={movie} />
+            {ranked && (
+              <span
+                aria-label={t.home.rank(index + 1)}
+                className="pointer-events-none absolute top-2 left-1/2 flex size-8 -translate-x-1/2 items-center justify-center rounded-full bg-primary text-sm font-bold text-black shadow"
+              >
+                {index + 1}
+              </span>
+            )}
+          </div>
+        ))}
+      </MovieGrid>
+    </section>
+  );
+}
+
+/** Best sellers of the week; nothing is shown while loading, on error or when the list is empty (not essential). */
+function TrendingSection() {
+  const t = useT();
+  const trending = useApi("home:trending", () => movieApi.trending(ROW));
+  if (!trending.data || trending.data.length === 0) return null;
+  return (
+    <MovieRow
+      id="section-trending"
+      icon={Flame}
+      title={t.home.trending}
+      hint={t.home.trendingHint}
+      movies={trending.data}
+      ranked
+    />
+  );
+}
+
+/** Suggestions by the user's own bookings and favourites; hidden for guests and while they are just the trending list. */
+function RecommendedSection() {
+  const t = useT();
+  const { user } = useSession();
+  const recommended = useApi(user ? `home:recommended:${user.id}` : null, () => movieApi.recommended(ROW));
+  if (!user || !recommended.data?.personalized || recommended.data.movies.length === 0) return null;
+  return (
+    <MovieRow
+      id="section-recommended"
+      icon={Sparkles}
+      title={t.home.recommended}
+      hint={t.home.recommendedHint}
+      movies={recommended.data.movies}
+    />
   );
 }
 
