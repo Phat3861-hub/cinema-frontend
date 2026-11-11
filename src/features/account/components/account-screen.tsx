@@ -1,6 +1,6 @@
 "use client";
 
-import { KeyRound, LogOut, MonitorSmartphone, Ticket, UserRound } from "lucide-react";
+import { Bell, KeyRound, LogOut, MonitorSmartphone, Ticket, UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
@@ -28,14 +28,18 @@ import {
 } from "@/features/auth/validation";
 import { BookingTickets } from "@/features/booking/components/booking-tickets";
 import { MyBookings } from "@/features/booking/components/my-bookings";
+import { MyNotifications } from "@/features/notification/components/my-notifications";
 import { useT } from "@/i18n";
 import { errorCodeOf, getErrorMessage } from "@/lib/error-messages";
 
+type Section = "account" | "tickets" | "notifications";
+
 /**
  * Profile sidebar (Ticketor Profile) + account info, change password, sign out of every device; the tickets section
- * shows the booking history, or one booking's e-tickets when `bookingId` is given.
+ * shows the booking history, or one booking's e-tickets when `bookingId` is given; the notifications section lists
+ * the in-app notifications.
  */
-export function AccountScreen({ section, bookingId }: { section: "account" | "tickets"; bookingId?: number }) {
+export function AccountScreen({ section, bookingId }: { section: Section; bookingId?: number }) {
   const router = useRouter();
   const pathname = usePathname();
   const { status, user } = useSession();
@@ -51,6 +55,8 @@ export function AccountScreen({ section, bookingId }: { section: "account" | "ti
       <AccountNav user={user} section={section} />
       {section === "account" ? (
         <AccountDetails user={user} />
+      ) : section === "notifications" ? (
+        <MyNotifications />
       ) : bookingId !== undefined ? (
         <BookingTickets bookingId={bookingId} />
       ) : (
@@ -60,13 +66,14 @@ export function AccountScreen({ section, bookingId }: { section: "account" | "ti
   );
 }
 
-function AccountNav({ user, section }: { user: CurrentUser; section: "account" | "tickets" }) {
+function AccountNav({ user, section }: { user: CurrentUser; section: Section }) {
   const t = useT();
   const router = useRouter();
   const { logout } = useSession();
   const items = [
     { key: "account", href: ROUTES.account, label: t.nav.account, icon: UserRound },
     { key: "tickets", href: ROUTES.myTickets, label: t.nav.myTickets, icon: Ticket },
+    { key: "notifications", href: ROUTES.notifications, label: t.nav.notifications, icon: Bell },
   ] as const;
 
   return (

@@ -1,4 +1,4 @@
-import type { Messages } from "@/i18n/messages/vi";
+import type { BookingText, Messages } from "@/i18n/messages/vi";
 
 /** English UI text; typed against the Vietnamese dictionary so a missing key fails the typecheck. */
 export const en: Messages = {
@@ -52,6 +52,7 @@ export const en: Messages = {
     main: "Main navigation",
     menu: "Menu",
     movies: "Movies",
+    notifications: "Notifications",
     myTickets: "My tickets",
     offers: "Offers",
     openMenu: "Open menu",
@@ -413,6 +414,43 @@ export const en: Messages = {
     },
   },
 
+  notifications: {
+    title: "Notifications",
+    bell: (count: number) => (count > 0 ? `Notifications, ${count} unread` : "Notifications"),
+    recent: "Recent notifications",
+    markAllRead: "Mark all as read",
+    allMarked: "All notifications marked as read.",
+    viewAll: "View all",
+    unread: "Unread",
+    justNow: "Just now",
+    tabs: "Filter notifications",
+    tabAll: "All",
+    tabUnread: "Unread",
+    empty: "You have no notifications yet",
+    emptyUnread: "No unread notifications",
+    emptyHint: "Updates about your tickets, showtimes and reviews will appear here.",
+    types: {
+      BOOKING_CONFIRMED: {
+        title: "Tickets confirmed",
+        body: (b: BookingText) => `${b.movie} – ${b.time} at ${b.place}. Seats ${b.seats} (booking ${b.code}).`,
+      },
+      SHOWTIME_CANCELLED: {
+        title: "Showtime cancelled",
+        body: (b: BookingText) =>
+          `${b.movie} at ${b.time}, ${b.place} was cancelled. The tickets of booking ${b.code} are void; the cinema will refund you.`,
+      },
+      SHOWTIME_REMINDER: {
+        title: "Your show starts soon",
+        body: (b: BookingText) => `${b.movie} starts at ${b.time} at ${b.place}. Seats ${b.seats}.`,
+      },
+      REVIEW_HIDDEN: {
+        title: "Your review was hidden",
+        body: (movie: string, reason: string | null, note: string | null) =>
+          `Your review of ${movie} was hidden${reason ? ` – reason: ${reason}` : ""}.${note ? ` Note: ${note}` : ""}`,
+      },
+    },
+  },
+
   auth: {
     backToLogin: "Back to login",
     checkEmail: {
@@ -632,6 +670,7 @@ export const en: Messages = {
     VOUCHER_NOT_APPLICABLE: "This voucher does not apply to this cinema or movie.",
     BANNER_NOT_FOUND: "Banner not found.",
     REVIEW_NOT_FOUND: "Review not found.",
+    NOTIFICATION_NOT_FOUND: "Notification not found.",
     REVIEW_ALREADY_EXISTS: "You have already reviewed this movie – edit your review instead.",
     REVIEW_NOT_ELIGIBLE: "Only customers who watched the movie at our cinemas can review it.",
     REVIEW_HIDDEN: "This review was hidden by a moderator and can no longer be edited.",

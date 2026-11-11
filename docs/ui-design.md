@@ -103,7 +103,8 @@ API: ✅ đã có · ⏳ backend chưa làm (dựng UI với dữ liệu giả /
 ### 4.2 Khung trang `(main)`
 - **Navbar** (2 viên thuốc như Figma): logo · Phim · Rạp | tìm kiếm · Đăng nhập / Đăng ký **hoặc** avatar + tên → menu:
   Tài khoản, Vé của tôi, **Trang quản trị** (chỉ khi user có ít nhất 1 permission admin, xem §5.3), Đăng xuất.
-  Mobile: hamburger → drawer.
+  Đã đăng nhập: **chuông thông báo** trước avatar (badge số chưa đọc, dropdown 8 mới nhất + "Đánh dấu đã đọc tất cả" + "Xem tất cả").
+  Mobile: hamburger → drawer (có thêm mục Thông báo).
 - **Footer**: logo, mô tả ngắn, cột Phim (Đang chiếu, Sắp chiếu) / Rạp / Hỗ trợ (FAQ, Liên hệ); bỏ link "Get the App".
 
 ### 4.3 Trang khách hàng
@@ -123,9 +124,10 @@ API: ✅ đã có · ⏳ backend chưa làm (dựng UI với dữ liệu giả /
 | bước **Vé** / `/booking/[id]/result` | Check out `4236:35940` | ⏳ booking | "Thanh toán thành công": mã đặt vé + **QR code** (thay barcode), phim, rạp, **phòng**, ngày giờ, ghế, bắp nước, tổng VND; thông tin khách lấy từ `/auth/me` (họ tên, email, SĐT). Nút "Tải vé" (PDF/ảnh), "Vé của tôi". Thất bại / hết hạn giữ ghế → màn lỗi + quay lại chọn ghế |
 | `/my-tickets` | Profile/Manage Tickets `4281:26337` | ✅ `/bookings/me` | Sidebar tài khoản (dưới). "Sắp tới" / "Đã xem" (+ "Đã hủy / hoàn tiền"); dòng: poster, tên phim, ngày giờ, rạp, số vé + ghế, badge trạng thái, "Chi tiết" |
 | `/my-tickets/[bookingId]` | Profile/Manage Tickets/Ticket `4281:26485` | ✅ `/bookings/{id}` (vé + QR, in vé); ⏳ hoàn tiền | Vé có QR, nút yêu cầu hoàn tiền (`REFUND_REQUEST`, theo điều kiện docs backend §5.4) |
+| `/notifications` | (mới – sidebar Profile) | ✅ `/notifications/me`, `unread-count`, `read`, `read-all` | Tab Tất cả / Chưa đọc (+ số), phân trang 10, nút "Đánh dấu đã đọc tất cả". Dòng: icon theo loại (vé xanh, hủy suất đỏ, nhắc giờ accent, đánh giá bị ẩn vàng), tiêu đề + nội dung dịch từ `type` + `data`, giờ tương đối, chấm chưa đọc; bấm → vé / phim `#reviews` |
 | `/account` | Profile/Dashboard `4281:27425` + form Setting BankDash | ✅ `/auth/me`; ⏳ cập nhật hồ sơ (AUTH-07) | Thông tin tài khoản; tab **Đổi mật khẩu** (✅ `POST /auth/change-password`) và **Đăng xuất mọi thiết bị** (✅ `POST /auth/logout-all`) |
 
-**Sidebar tài khoản** (Profile): Tài khoản · Vé của tôi · Điểm thưởng (⏳ PRO-02, ẩn tới khi có) · Đăng xuất.
+**Sidebar tài khoản** (Profile): Tài khoản · Vé của tôi · Thông báo · Điểm thưởng (⏳ PRO-02, ẩn tới khi có) · Đăng xuất.
 **Bỏ** My Wallet, Payments, My Watchlist (không có trong nghiệp vụ).
 
 ## 5. Admin – bố cục BankDash, phong cách Ticketor
@@ -134,7 +136,7 @@ API: ✅ đã có · ⏳ backend chưa làm (dựng UI với dữ liệu giả /
 - **Sidebar** 250px (BankDash `78:351`): nền `black`, logo "PNT Admin", menu nhóm theo §5.2, mục đang chọn: thanh dọc
   `primary` bên trái + chữ `primary`; mục khác `neutral-300`. Tablet (≥768 <1280): thu gọn còn icon; mobile: drawer.
 - **Topbar** cao ~100px: tiêu đề trang (Header/4) · **bộ chọn rạp** (§5.3) · ô tìm kiếm (tùy trang) · avatar → menu
-  (Về trang khách hàng, Đổi mật khẩu, Đăng xuất). Bỏ nút settings / chuông của BankDash tới khi có SYS-02.
+  (Về trang khách hàng, Đổi mật khẩu, Đăng xuất). Chuông thông báo (SYS-02) trước avatar, dùng chung component với header khách; bỏ nút settings của BankDash.
 - **Nội dung**: nền `neutral-50` (dark: `neutral-850`), card trắng (dark: `neutral-800`) bo **16px** (BankDash dùng 25px – giảm cho hợp Ticketor),
   không bóng đổ nặng. Nút chính: nền `primary` + chữ `black`; nút phụ: viền `neutral-700`/`black`; nút nguy hiểm: `danger`.
   **Không dùng chữ vàng trên nền sáng** (tương phản kém) – dùng `primary-900` hoặc `black`.
