@@ -13,6 +13,12 @@ export function notificationText(n: AppNotification, t: Messages, intlLocale: st
       body: texts.REVIEW_HIDDEN.body(n.data.movieTitle, reason, n.data.note),
     };
   }
+  if (n.type === "MOVIE_ON_SALE") {
+    return {
+      title: texts.MOVIE_ON_SALE.title,
+      body: texts.MOVIE_ON_SALE.body(n.data.movieTitle, formatDateTime(n.data.firstStartTime, intlLocale)),
+    };
+  }
   const d = n.data;
   const booking = {
     code: d.bookingCode,
@@ -27,7 +33,9 @@ export function notificationText(n: AppNotification, t: Messages, intlLocale: st
 
 /** Where a click on the notification leads. */
 export function notificationHref(n: AppNotification): string {
-  return n.type === "REVIEW_HIDDEN" ? `${ROUTES.movieDetail(n.data.movieSlug)}#reviews` : ROUTES.myTicket(n.data.bookingId);
+  if (n.type === "REVIEW_HIDDEN") return `${ROUTES.movieDetail(n.data.movieSlug)}#reviews`;
+  if (n.type === "MOVIE_ON_SALE") return `${ROUTES.movieDetail(n.data.movieSlug)}#showtimes`;
+  return ROUTES.myTicket(n.data.bookingId);
 }
 
 const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [

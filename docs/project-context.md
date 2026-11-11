@@ -4,14 +4,20 @@
 > Cập nhật theo skill `/update-context` (rule CLAUDE.md §0). Ghi **trạng thái hiện tại**, không chép lại code hay git log.
 > Trạng thái backend / API đã sẵn sàng: `../cinema-backend/docs/project-context.md` (mục 4).
 >
-> **Cập nhật lần cuối:** 2026-11-11 (cài đặt thông báo + realtime; nhánh `feature/notification-prefs-ui`)
+> **Cập nhật lần cuối:** 2026-11-11 (phim yêu thích; nhánh `feature/favorites-ui`)
 
 ## 1. Trạng thái hiện tại
 - `feature/auth-ui`, `feature/ui-modules` (PR #2), `feature/booking-ui` (PR #3) đã merge. `feature/booking-counter-ui` (POS, đơn đặt vé
   theo rạp, vé QR) đã commit, chờ PR; `feature/voucher-ui`, `feature/banner-offers-ui`, `feature/review-ui`, `feature/report-ui` đã commit + push, `feature/system-admin-ui` đã commit.
   `feature/notification-ui` (SYS-02), `feature/profile-ui` (AUTH-07 + upload ảnh), `feature/loyalty-ui` (PRO-02 + BOK-04) và `feature/hardening-ui` (lỗi 429)
-  đã commit. Nhánh **`feature/notification-prefs-ui`** (tách từ `feature/hardening-ui`), **chưa commit**: đợt 1 của kế hoạch phần khách hàng (kế hoạch 5 đợt ở
-  `cinema-backend/docs/project-context.md` §5, backend `feature/notification-prefs`). Lint / typecheck / build xanh.
+  và `feature/notification-prefs-ui` (đợt 1 phần khách hàng) đã commit. Nhánh **`feature/favorites-ui`** (tách từ `feature/notification-prefs-ui`), **chưa commit**:
+  đợt 2 của kế hoạch phần khách hàng (kế hoạch 5 đợt ở `cinema-backend/docs/project-context.md` §5, backend `feature/favorites`). Lint / typecheck / build xanh.
+- **Phim yêu thích** (`features/movie`): `useFavorites()` (`hooks/use-favorites.ts`) = store cấp module (`useSyncExternalStore`) giữ tập id yêu thích của user,
+  tải 1 lần / user từ `GET /favorites/movie-ids`, `toggle` lạc quan (lỗi ⇒ trả lại + ném lỗi). `FavoriteButton`: `overlay` (nút tròn trên áp phích ở `MovieCard`,
+  là **anh em** của `<Link>` trong một `div.relative`, không lồng nút trong link) và `button` (nút "Yêu thích / Đã yêu thích" ở hero trang phim); `aria-pressed`,
+  chưa đăng nhập ⇒ `/login?next=<trang hiện tại>`; toast khi thêm / bỏ. `/favorites` (`MyFavorites`, mục **Phim yêu thích** ở sidebar tài khoản + menu user):
+  lưới thẻ phim 12 / trang, bỏ tim là thẻ biến mất ngay (lọc theo tập id), trống ⇒ nút "Xem danh sách phim". Thông báo `MOVIE_ON_SALE` (icon tim) dẫn tới
+  `/movies/{slug}#showtimes`; có trong khối cài đặt thông báo.
 - **Cài đặt thông báo + realtime** (`features/notification`): `NotificationSettings` nằm dưới danh sách ở `/notifications` – mỗi loại 2 ô tick
   **Trong ứng dụng** / **Email** (loại `optional = false` tick sẵn + khóa, ghi "Luôn được gửi"; loại không có email chỉ 1 ô), ô **Không nhận email nhắc lịch**
   (`emailUnsubscribed`, bật thì khóa các ô Email tùy chọn); mỗi lần đổi lưu ngay (`PUT /notifications/me/preferences`, lạc quan, lỗi ⇒ trả trạng thái cũ + toast).
@@ -136,7 +142,7 @@
 | Nhóm | Route | Trạng thái |
 |---|---|---|
 | Auth | `/login`, `/register`, `/register/check-email`, `/verify-email`, `/forgot-password`, `/reset-password` | Xong, i18n |
-| Khách hàng | `/`, `/offers`, `/movies`, `/movies/[slug]`, `/cinemas`, `/cinemas/[slug]`, `/booking/[showtimeId]`, `/account`, `/my-tickets`, `/my-tickets/[bookingId]`, `/notifications`, `/points` | Xong với API hiện có; booking dừng ở bước thanh toán (chờ VNPay) |
+| Khách hàng | `/`, `/offers`, `/movies`, `/movies/[slug]`, `/cinemas`, `/cinemas/[slug]`, `/booking/[showtimeId]`, `/account`, `/my-tickets`, `/my-tickets/[bookingId]`, `/notifications`, `/points`, `/favorites` | Xong với API hiện có; booking dừng ở bước thanh toán (chờ VNPay) |
 | Admin nội dung | `/admin/movies(/new,/[id])`, `/admin/genres`, `/admin/banners`, `/admin/reviews` | Xong |
 | Admin quầy vé | `/admin/pos`, `/admin/bookings` | Xong (chỉ tiền mặt) |
 | Admin kinh doanh | `/admin/products`, `/admin/vouchers`, `/admin/reports` | Xong |
@@ -176,13 +182,17 @@ phòng, ghế), bấm → `/my-tickets/{id}` + badge về 0; email Mailpit kèm 
 Đã test trên Chrome 2026-11-11 (cài đặt thông báo, manager2): khối cài đặt hiện đúng 4 loại, tắt Email nhắc lịch + tick "Không nhận email nhắc lịch" lưu ngay
 (đối chiếu API); staff2 bán quầy cho email manager2 ⇒ danh sách + badge chuông đổi **không tải lại trang** (push STOMP), nội dung có "tích được 9 điểm";
 link trong email Mailpit → `/unsubscribe` → "Đăng ký lại". Chưa test: en + dark của màn mới, màn hẹp, token sai trên trình duyệt, ngắt mạng rồi nối lại.
+Đã test trên Chrome 2026-11-11 (phim yêu thích, manager2): bấm tim ở thẻ phim `/movies` ⇒ tim đỏ + toast; `/favorites` hiện thẻ; tạo 2 suất đầu tiên cho phim
+(API) ⇒ chuông tăng, dropdown có **1** thông báo "Phim yêu thích đã mở bán vé"; trang phim hiện nút "Đã yêu thích". Chưa test: bỏ tim ở `/favorites`, khách chưa
+đăng nhập bấm tim, en + dark, màn hẹp, email mở bán trong Mailpit (đã có dòng PENDING trong outbox). **Không chạy `npm run build` khi dev server đang chạy**
+(ghi đè `.next` ⇒ dev server báo "Jest worker encountered … exceptions"; khởi động lại là hết).
 Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng trang vào iframe 390px.
 
 ## 4. Bước tiếp theo
-1. Chủ dự án review + commit nhánh `feature/notification-prefs-ui` (lệnh PowerShell, không trailer Claude); sau đó đợt 2 `feature/favorites-ui`
-   (nút trái tim ở thẻ / trang phim, trang `/favorites` trong sidebar tài khoản, loại thông báo `MOVIE_ON_SALE`). Thứ tự PR:
+1. Chủ dự án review + commit nhánh `feature/favorites-ui` (lệnh PowerShell, không trailer Claude); sau đó đợt 3 `feature/discovery-ui`
+   (hàng "Phim hot" + "Gợi ý cho bạn" ở trang chủ, nút "Gần tôi" ở `/cinemas`). Thứ tự PR:
    `feature/booking-counter-ui` → `feature/voucher-ui` → `feature/banner-offers-ui` → `feature/review-ui` → `feature/report-ui` → `feature/system-admin-ui` → `feature/notification-ui`
-   → `feature/profile-ui` → `feature/loyalty-ui` → `feature/hardening-ui` → `feature/notification-prefs-ui`. Test tay trên trình duyệt các mục ở §6
+   → `feature/profile-ui` → `feature/loyalty-ui` → `feature/hardening-ui` → `feature/notification-prefs-ui` → `feature/favorites-ui`. Test tay trên trình duyệt các mục ở §6
    (hồ sơ / upload, điểm thưởng, lỗi 429).
 2. **(Tạm hoãn)** Backend PR 3 (`feature/payment-vnpay`): bật nút Thanh toán, trang chờ kết quả + bước Vé (dùng `TicketCard`), POS thêm
    VNPay QR. Sau đó check-in QR (`/admin/check-in`), hoàn tiền.
@@ -218,6 +228,8 @@ Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng tran
 | 2026-11-07 | `dangerouslyAllowLocalIP` chỉ bật khi `NODE_ENV=development` | Ảnh dev nằm ở localhost:9000; production dùng storage / CDN công khai nên giữ chặn SSRF |
 | 2026-11-07 | Công thức điểm (`maxPointsFor`, `pointsEarnedFor`) lặp ở FE (`features/loyalty/rules.ts`) | Hiện mức tối đa / số điểm sẽ tích ngay, không gọi API mỗi lần đổi giỏ; backend vẫn kiểm tra lại |
 | 2026-11-07 | Trang điểm là route riêng `/points` trong khung tài khoản (như `/notifications`) | Link trực tiếp được, sidebar giữ trạng thái chọn |
+| 2026-11-11 | Trạng thái yêu thích giữ ở store cấp module dùng chung cho mọi trái tim, không gọi API theo từng thẻ | 1 request cho cả trang; thẻ ở trang chủ, danh sách, trang yêu thích luôn khớp nhau |
+| 2026-11-11 | Trái tim hiện với cả khách chưa đăng nhập (bấm ⇒ đăng nhập rồi quay lại) | Gợi ý tính năng; không ẩn theo quyền vì mọi tài khoản đều dùng được |
 | 2026-11-11 | Kết nối realtime thông báo đặt trong `NotificationBell`, chỉ báo "có thay đổi" rồi tải lại qua REST | Mỗi trang có đúng 1 chuông ⇒ 1 kết nối; dùng lại cơ chế `notifications:changed` sẵn có, mất kết nối vẫn đúng nhờ poll |
 | 2026-11-11 | Cài đặt thông báo lưu ngay từng ô (không có nút Lưu), đặt chung trang `/notifications` | Ít thao tác; không thêm mục sidebar |
 | 2026-11-11 | `/unsubscribe` hủy ngay khi mở link (không hỏi xác nhận), có nút hoàn tác | Đúng kỳ vọng "một cú bấm" của link hủy đăng ký; backend idempotent |
@@ -259,6 +271,7 @@ Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng tran
 - Skill `ui-ux-pro-max` ở `.claude/skills/SKILL.md` thiếu thư mục riêng + `scripts/` → không nạp được.
 
 ## 7. Nhật ký session (mới nhất trên cùng, giữ tối đa 10 dòng)
+- **2026-11-11** – Notification prefs UI đã commit; nhánh `feature/favorites-ui` (đợt 2): trái tim ở thẻ phim + trang phim, trang `/favorites`, thông báo `MOVIE_ON_SALE`; test Chrome manager2 (tim ở thẻ + trang phim, `/favorites`, thông báo mở bán sau khi tạo suất đầu tiên); lint / typecheck / build xanh.
 - **2026-11-11** – Hardening UI đã commit; nhánh `feature/notification-prefs-ui` (đợt 1 phần khách hàng): khối cài đặt thông báo ở `/notifications`, trang `/unsubscribe`, thông báo realtime qua STOMP, câu điểm tích được; test Chrome manager2 + bán quầy thật + Mailpit; lint / typecheck / build xanh.
 - **2026-11-10** – Loyalty UI đã commit; nhánh `feature/hardening-ui`: lỗi 429 `TOO_MANY_REQUESTS` hiện "thử lại sau N giây / M phút" theo `data.retryAfterSeconds` ở mọi form (qua `getErrorMessage`), i18n vi / en; lint / typecheck / build xanh.
 - **2026-11-07** – Profile UI đã commit; nhánh `feature/loyalty-ui`: `/points` (số dư, quy tắc, lịch sử), ô dùng điểm ở bước thanh toán, dòng Voucher / Điểm tách riêng ở mọi chỗ hiện tiền, POS kiểm tra + dùng điểm, tab điểm + điều chỉnh ở admin user; lint / typecheck / build xanh (chưa test trình duyệt).
@@ -268,4 +281,3 @@ Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng tran
 - **2026-11-04** – Đánh giá đã commit + push; nhánh `feature/report-ui`: `features/report`, khối doanh thu ở `/admin`, màn `/admin/reports` 5 tab + xuất CSV; test Chrome ADMIN + manager2, sửa 4 lỗi.
 - **2026-11-03** – Banner + ưu đãi UI đã commit + push; nhánh `feature/review-ui`: khối đánh giá ở trang phim (tổng quan + lọc sao, viết / sửa / xóa, trạng thái bị ẩn), nút Đánh giá phim ở vé đã xem, màn admin kiểm duyệt; test Chrome customer1 + CONTENT_MANAGER, sửa 3 lỗi.
 - **2026-11-02** – Voucher UI đã commit + push; nhánh `feature/banner-offers-ui`: màn admin Banner (lọc, ↑/↓, ẩn/hiện, xem trước), carousel banner trang chủ, trang `/offers` + khu Ưu đãi trang chủ, ô `publicOffer` ở voucher; test Chrome CONTENT_MANAGER, sửa 2 lỗi giao diện.
-- **2026-11-02** – Nhánh `feature/voucher-ui`: màn quản lý voucher (lọc, thêm/sửa, tạm dừng, xóa), áp mã ở bước Thanh toán, voucher ở POS (quote + tính lại tại chỗ), dòng giảm giá ở vé / biên nhận / chi tiết đơn; i18n mã lỗi `VOUCHER_*`.

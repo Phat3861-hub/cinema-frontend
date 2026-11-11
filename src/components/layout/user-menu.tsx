@@ -1,6 +1,6 @@
 "use client";
 
-import { Coins, LayoutDashboard, LogOut, Ticket, UserRound } from "lucide-react";
+import { Coins, Heart, LayoutDashboard, LogOut, Ticket, UserRound } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -67,6 +67,7 @@ export function UserMenu({ area }: { area: "customer" | "admin" }) {
   const items: MenuItem[] = [
     { kind: "link", href: ROUTES.account, label: t.nav.account, icon: <UserRound aria-hidden className="size-4" /> },
     { kind: "link", href: ROUTES.myTickets, label: t.nav.myTickets, icon: <Ticket aria-hidden className="size-4" /> },
+    { kind: "link", href: ROUTES.favorites, label: t.nav.favorites, icon: <Heart aria-hidden className="size-4" /> },
     { kind: "link", href: ROUTES.points, label: t.nav.points, icon: <Coins aria-hidden className="size-4" /> },
   ];
   if (area === "customer" && hasAdminAccess(user)) {

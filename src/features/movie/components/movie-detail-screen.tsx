@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { CoverImage } from "@/components/ui/cover-image";
 import { ErrorState, Skeleton } from "@/components/ui/states";
 import { movieApi } from "@/features/movie/api";
+import { FavoriteButton } from "@/features/movie/components/favorite-button";
 import { AgeBadge, MovieStatusBadge, Rating } from "@/features/movie/components/movie-badges";
 import { MovieReviews } from "@/features/movie/components/movie-reviews";
 import { genreLabel, splitCast, youtubeEmbedUrl } from "@/features/movie/labels";
@@ -109,6 +110,7 @@ function Hero({ movie }: { movie: Movie }) {
           </dl>
 
           <div className="flex flex-wrap gap-3">
+            <FavoriteButton movieId={movie.id} title={movie.title} variant="button" className="order-last" />
             {movie.status !== "ENDED" && (
               <a href="#showtimes" className="inline-flex h-12 items-center gap-2 rounded bg-primary px-6 font-medium text-black hover:bg-primary/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                 <Ticket aria-hidden className="size-5" />

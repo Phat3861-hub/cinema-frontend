@@ -13,6 +13,7 @@ export const ROUTES = {
   myTicket: (bookingId: Id) => `/my-tickets/${bookingId}`,
   notifications: "/notifications",
   points: "/points",
+  favorites: "/favorites",
   account: "/account",
   login: "/login",
   register: "/register",

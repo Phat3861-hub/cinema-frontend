@@ -1,5 +1,10 @@
 /** Mirrors com.pnt.cinema.modules.notification.entity.NotificationType. */
-export type NotificationType = "BOOKING_CONFIRMED" | "SHOWTIME_CANCELLED" | "SHOWTIME_REMINDER" | "REVIEW_HIDDEN";
+export type NotificationType =
+  | "BOOKING_CONFIRMED"
+  | "SHOWTIME_CANCELLED"
+  | "SHOWTIME_REMINDER"
+  | "REVIEW_HIDDEN"
+  | "MOVIE_ON_SALE";
 
 /** `data` of the booking notifications (`startTime` is an ISO instant). */
 export interface BookingNotificationData {
@@ -26,6 +31,14 @@ export interface ReviewHiddenData {
   note: string | null;
 }
 
+/** `data` of MOVIE_ON_SALE: a favourite movie got its first showtimes (`firstStartTime` is an ISO instant). */
+export interface MovieOnSaleData {
+  movieId: number;
+  movieTitle: string;
+  movieSlug: string;
+  firstStartTime: string;
+}
+
 interface Base {
   id: number;
   /** English fallback; the UI renders its own text from `type` + `data`. */
@@ -38,7 +51,8 @@ interface Base {
 /** Mirrors NotificationResponse, narrowed by `type`. */
 export type AppNotification =
   | (Base & { type: "BOOKING_CONFIRMED" | "SHOWTIME_CANCELLED" | "SHOWTIME_REMINDER"; data: BookingNotificationData })
-  | (Base & { type: "REVIEW_HIDDEN"; data: ReviewHiddenData });
+  | (Base & { type: "REVIEW_HIDDEN"; data: ReviewHiddenData })
+  | (Base & { type: "MOVIE_ON_SALE"; data: MovieOnSaleData });
 
 /** One row of `GET /notifications/me/preferences`. `optional = false`: always delivered, cannot be turned off. */
 export interface NotificationPreference {

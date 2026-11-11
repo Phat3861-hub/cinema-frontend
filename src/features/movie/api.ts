@@ -51,3 +51,14 @@ export const reviewApi = {
   changeStatus: (reviewId: number, body: ReviewStatusRequest) =>
     apiFetch<AdminReview>(`/reviews/${reviewId}/status`, { method: "PATCH", body }),
 };
+
+/** Favourite movies of the signed-in user. Reads live under `/favorites` (public `/movies` GETs ignore the token). */
+export const favoriteApi = {
+  add: (movieId: number) => apiFetch<{ movieId: number; favorite: boolean }>(`/movies/${movieId}/favorite`, { method: "PUT" }),
+  remove: (movieId: number) =>
+    apiFetch<{ movieId: number; favorite: boolean }>(`/movies/${movieId}/favorite`, { method: "DELETE" }),
+  /** Most recently added first. */
+  list: (query: { page?: number; size?: number } = {}) =>
+    apiFetch<PageResponse<MovieSummary>>("/favorites/movies", { query: { ...query } }),
+  movieIds: () => apiFetch<number[]>("/favorites/movie-ids"),
+};
