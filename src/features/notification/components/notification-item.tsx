@@ -1,6 +1,6 @@
 "use client";
 
-import { AlarmClock, CalendarX2, EyeOff, Ticket, type LucideIcon } from "lucide-react";
+import { AlarmClock, CalendarX2, EyeOff, Heart, Ticket, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { notificationApi } from "@/features/notification/api";
 import { announceNotificationsChanged } from "@/features/notification/hooks/use-unread-count";
@@ -13,6 +13,7 @@ const ICONS: Record<NotificationType, { icon: LucideIcon; tone: string }> = {
   SHOWTIME_CANCELLED: { icon: CalendarX2, tone: "bg-danger/15 text-danger" },
   SHOWTIME_REMINDER: { icon: AlarmClock, tone: "bg-accent/15 text-accent" },
   REVIEW_HIDDEN: { icon: EyeOff, tone: "bg-warning/15 text-warning" },
+  MOVIE_ON_SALE: { icon: Heart, tone: "bg-danger/15 text-danger" },
 };
 
 /** Marks an unread notification read in the background (the click navigates right away). */
