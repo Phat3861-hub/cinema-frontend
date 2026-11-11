@@ -93,11 +93,18 @@ export interface Booking {
   customer: BookingCustomer | null;
   /** Staff member of a counter sale (null online). */
   soldBy: BookingSeller | null;
-  /** Voucher applied (its discount is `discountAmount`); null = none. */
+  /** Voucher applied (its discount is `voucherDiscount`); null = none. */
   voucher: VoucherSummary | null;
   subtotal: number;
+  voucherDiscount: number;
+  /** Loyalty points used; their value is `pointsDiscount`. */
+  pointsUsed: number;
+  pointsDiscount: number;
+  /** `voucherDiscount + pointsDiscount`. */
   discountAmount: number;
   totalAmount: number;
+  /** Points credited when the booking was confirmed (customer accounts only). */
+  pointsEarned: number;
   /** End of the seat hold while PENDING. */
   expiresAt: string | null;
   confirmedAt: string | null;
@@ -115,7 +122,7 @@ export interface BookingItemInput {
   quantity: number;
 }
 
-/** BOK-09: cash sale at the counter, confirmed at once. Customer details and voucher are optional. */
+/** BOK-09: cash sale at the counter, confirmed at once. Customer details, voucher and points are optional. */
 export interface CounterBookingRequest {
   showtimeId: number;
   seatIds: number[];
@@ -124,6 +131,8 @@ export interface CounterBookingRequest {
   customerEmail?: string;
   customerPhone?: string;
   voucherCode?: string;
+  /** Points of the account linked by `customerEmail`. */
+  pointsToUse?: number;
 }
 
 /** Voucher check at the counter: the order subtotal on the till and the customer email typed in. */

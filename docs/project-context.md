@@ -4,13 +4,21 @@
 > Cập nhật theo skill `/update-context` (rule CLAUDE.md §0). Ghi **trạng thái hiện tại**, không chép lại code hay git log.
 > Trạng thái backend / API đã sẵn sàng: `../cinema-backend/docs/project-context.md` (mục 4).
 >
-> **Cập nhật lần cuối:** 2026-11-07 (hồ sơ + avatar + upload ảnh admin; nhánh `feature/profile-ui`)
+> **Cập nhật lần cuối:** 2026-11-07 (điểm thưởng; nhánh `feature/loyalty-ui`)
 
 ## 1. Trạng thái hiện tại
 - `feature/auth-ui`, `feature/ui-modules` (PR #2), `feature/booking-ui` (PR #3) đã merge. `feature/booking-counter-ui` (POS, đơn đặt vé
   theo rạp, vé QR) đã commit, chờ PR; `feature/voucher-ui`, `feature/banner-offers-ui`, `feature/review-ui`, `feature/report-ui` đã commit + push, `feature/system-admin-ui` đã commit.
-  `feature/notification-ui` (SYS-02) đã commit. Nhánh **`feature/profile-ui`** (tách từ `feature/notification-ui`), **chưa commit**: hồ sơ AUTH-07 + upload ảnh
-  (backend `feature/profile-storage`). Lint / typecheck / build xanh.
+  `feature/notification-ui` (SYS-02) và `feature/profile-ui` (AUTH-07 + upload ảnh) đã commit. Nhánh **`feature/loyalty-ui`** (tách từ `feature/profile-ui`),
+  **chưa commit**: điểm thưởng PRO-02 + dùng điểm BOK-04 (backend `feature/loyalty`). Lint / typecheck / build xanh.
+- **Điểm thưởng** (`features/loyalty/`): `/points` (mục mới ở sidebar tài khoản + menu user) – thẻ số dư + quy đổi VND, 3 dòng quy tắc (lấy từ
+  `GET /loyalty/me`), lịch sử phân trang 10 (`LoyaltyHistory`: icon theo type, mã đơn link tới vé, lý do + người chỉnh, ± điểm, số dư sau). Bước Thanh toán:
+  `PointsBox` dưới `VoucherBox` – số dư (cộng lại điểm đơn đang dùng), mức tối đa của đơn (`maxPointsFor` trong `rules.ts`, cùng công thức backend),
+  ô số + **Dùng tối đa** + **Dùng**, đã dùng thì hiện chip −VND + nút bỏ; lỗi `LOYALTY_*` hiện tại chỗ kèm `maxPoints` / `balance`; gợi ý "sẽ tích N điểm".
+  Dòng giảm giá tách **Voucher** / **Điểm thưởng (N điểm)** qua `discountLines()` (`features/booking/discount-lines.ts`) ở bước thanh toán, vé, chi tiết vé,
+  hóa đơn POS, chi tiết đơn admin; "Tích được N điểm" khi `pointsEarned > 0`. **POS**: khối "Dùng điểm thưởng" dưới thông tin khách – cần email hợp lệ →
+  **Kiểm tra điểm** (`points-quote`), số điểm tự kẹp theo đơn hiện tại (đổi email ⇒ mất kết quả kiểm tra), gửi `pointsToUse`; bán lỗi `LOYALTY_*` ⇒ toast +
+  kiểm tra lại. **Admin user**: tab **Điểm thưởng** (số dư, lịch sử, dialog **Điều chỉnh điểm** số ± + lý do; ẩn với chính mình). Audit có `LOYALTY_ADJUST`.
 - **Hồ sơ + ảnh**: `/account` dùng `ProfileForm` (`features/account/components/profile-form.tsx`): avatar lớn + **Tải ảnh lên / Đổi ảnh** / **Xóa ảnh**
   (xác nhận); họ tên, email (khóa, gợi ý không đổi được), SĐT, ngày sinh (`type="date"`, 1900 → hôm qua), giới tính (Không chọn / Nam / Nữ / Khác),
   trạng thái + vai trò; nút Lưu chỉ bật khi có thay đổi, `PUT /auth/me` gửi đủ field (để trống = xóa), `PHONE_ALREADY_EXISTS` hiện dưới ô SĐT,
@@ -117,7 +125,7 @@
 | Nhóm | Route | Trạng thái |
 |---|---|---|
 | Auth | `/login`, `/register`, `/register/check-email`, `/verify-email`, `/forgot-password`, `/reset-password` | Xong, i18n |
-| Khách hàng | `/`, `/offers`, `/movies`, `/movies/[slug]`, `/cinemas`, `/cinemas/[slug]`, `/booking/[showtimeId]`, `/account`, `/my-tickets`, `/my-tickets/[bookingId]` | Xong với API hiện có; booking dừng ở bước thanh toán (chờ VNPay) |
+| Khách hàng | `/`, `/offers`, `/movies`, `/movies/[slug]`, `/cinemas`, `/cinemas/[slug]`, `/booking/[showtimeId]`, `/account`, `/my-tickets`, `/my-tickets/[bookingId]`, `/notifications`, `/points` | Xong với API hiện có; booking dừng ở bước thanh toán (chờ VNPay) |
 | Admin nội dung | `/admin/movies(/new,/[id])`, `/admin/genres`, `/admin/banners`, `/admin/reviews` | Xong |
 | Admin quầy vé | `/admin/pos`, `/admin/bookings` | Xong (chỉ tiền mặt) |
 | Admin kinh doanh | `/admin/products`, `/admin/vouchers`, `/admin/reports` | Xong |
@@ -157,9 +165,9 @@ phòng, ghế), bấm → `/my-tickets/{id}` + badge về 0; email Mailpit kèm 
 Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng trang vào iframe 390px.
 
 ## 4. Bước tiếp theo
-1. Chủ dự án review + commit nhánh `feature/profile-ui` (lệnh PowerShell, không trailer Claude); thứ tự PR:
+1. Chủ dự án review + commit nhánh `feature/loyalty-ui` (lệnh PowerShell, không trailer Claude); thứ tự PR:
    `feature/booking-counter-ui` → `feature/voucher-ui` → `feature/banner-offers-ui` → `feature/review-ui` → `feature/report-ui` → `feature/system-admin-ui` → `feature/notification-ui`
-   → `feature/profile-ui`. Test tay trên trình duyệt các mục ở §6 (hồ sơ / upload).
+   → `feature/profile-ui` → `feature/loyalty-ui`. Test tay trên trình duyệt các mục ở §6 (hồ sơ / upload, điểm thưởng).
    Thông báo realtime (WebSocket STOMP sẵn có) chỉ cân nhắc khi poll 60 s không đủ.
 2. **(Tạm hoãn)** Backend PR 3 (`feature/payment-vnpay`): bật nút Thanh toán, trang chờ kết quả + bước Vé (dùng `TicketCard`), POS thêm
    VNPay QR. Sau đó check-in QR (`/admin/check-in`), hoàn tiền.
@@ -193,9 +201,13 @@ Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng tran
 | 2026-11-07 | Upload ảnh admin bằng nút cạnh ô URL (vẫn dán URL được), upload ngay khi chọn file rồi điền URL | Form và API lưu không đổi; ảnh ngoài vẫn dùng được |
 | 2026-11-07 | Avatar cắt + thu nhỏ ở trình duyệt trước khi gửi (canvas, 512 px JPEG), server cắt lại 256 px | Ảnh điện thoại xoay đúng theo EXIF, file lớn vẫn dưới giới hạn 2 MB |
 | 2026-11-07 | `dangerouslyAllowLocalIP` chỉ bật khi `NODE_ENV=development` | Ảnh dev nằm ở localhost:9000; production dùng storage / CDN công khai nên giữ chặn SSRF |
+| 2026-11-07 | Công thức điểm (`maxPointsFor`, `pointsEarnedFor`) lặp ở FE (`features/loyalty/rules.ts`) | Hiện mức tối đa / số điểm sẽ tích ngay, không gọi API mỗi lần đổi giỏ; backend vẫn kiểm tra lại |
+| 2026-11-07 | Trang điểm là route riêng `/points` trong khung tài khoản (như `/notifications`) | Link trực tiếp được, sidebar giữ trạng thái chọn |
 | 2026-10-30 | Validation client lặp lại rule DTO backend; `VALIDATION_FAILED` chỉ hiện "Giá trị không hợp lệ" theo field | Backend chưa trả mã lỗi theo field |
 
 ## 6. Vấn đề mở / lưu ý
+- Điểm thưởng **chưa test trên trình duyệt** (không có công cụ trình duyệt trong session 2026-11-07): đã test API thật (online, quầy, hủy hoàn điểm). Cần thử tay:
+  `/points`, ô dùng điểm + voucher cùng lúc, POS kiểm tra điểm / đổi email / đổi giỏ, tab điểm ở admin user, en, màn hẹp.
 - Hồ sơ / upload ảnh **chưa test trên trình duyệt** (Chrome extension mất kết nối 2026-11-07): đã test API thật + `/_next/image` với ảnh RustFS. Cần thử tay:
   đổi / xóa avatar, ảnh điện thoại xoay EXIF, upload ở 4 form admin, banner với ảnh tải lên, light / dark, en, màn hẹp.
 - Ảnh tải lên mà không bấm Lưu form vẫn nằm trong storage (backend chưa có job dọn).
@@ -224,6 +236,7 @@ Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng tran
 - Skill `ui-ux-pro-max` ở `.claude/skills/SKILL.md` thiếu thư mục riêng + `scripts/` → không nạp được.
 
 ## 7. Nhật ký session (mới nhất trên cùng, giữ tối đa 10 dòng)
+- **2026-11-07** – Profile UI đã commit; nhánh `feature/loyalty-ui`: `/points` (số dư, quy tắc, lịch sử), ô dùng điểm ở bước thanh toán, dòng Voucher / Điểm tách riêng ở mọi chỗ hiện tiền, POS kiểm tra + dùng điểm, tab điểm + điều chỉnh ở admin user; lint / typecheck / build xanh (chưa test trình duyệt).
 - **2026-11-07** – Thông báo UI đã commit; nhánh `feature/profile-ui`: `/account` sửa hồ sơ + avatar (cắt ở canvas), `Avatar` hiện ảnh, `ImageUploadField` ở form banner / phim / bắp nước / rạp, `apiFetch` gửi FormData; lint / typecheck / build xanh, test API thật (chưa test trình duyệt).
 - **2026-11-07** – System admin UI đã commit; nhánh `feature/notification-ui`: `features/notification` (chuông + badge poll 60 s, dropdown portal, trang `/notifications` trong sidebar tài khoản, text i18n từ `type` + `data`); test Chrome với bán quầy thật + Mailpit.
 - **2026-11-07** – Báo cáo đã commit + push; nhánh `feature/system-admin-ui`: danh sách user có lọc, tab đơn đặt vé của user, tạo / đổi tên / xóa role + khóa quyền theo phạm vi, màn audit log (`features/audit`); test Chrome ADMIN, sửa 1 lỗi.
@@ -233,4 +246,3 @@ Cửa sổ Chrome không resize được; muốn xem màn hẹp thì nhúng tran
 - **2026-11-02** – Nhánh `feature/voucher-ui`: màn quản lý voucher (lọc, thêm/sửa, tạm dừng, xóa), áp mã ở bước Thanh toán, voucher ở POS (quote + tính lại tại chỗ), dòng giảm giá ở vé / biên nhận / chi tiết đơn; i18n mã lỗi `VOUCHER_*`.
 - **2026-11-02** – Nhánh `feature/booking-counter-ui`: POS cảm ứng (chọn suất, ghế lớn realtime, bắp nước, thu tiền mặt, in vé), đơn đặt vé theo rạp (lọc, tra mã, chi tiết, in lại), vé điện tử QR (`qrcode.react`), `PrintPortal`; sửa toast ghế bị lấy hiện 2 lần. Test Chrome ADMIN / staff2 / customer3, 2 tab POS.
 - **2026-11-01** – Nhánh `feature/booking-ui`: `@stomp/stompjs`, hook ghế realtime, luồng đặt vé (giữ ghế + đếm ngược, bắp nước, xem đơn, hủy), vé của tôi theo tab, admin bắp nước, i18n + mã lỗi booking. Test Chrome 2 tab. Nâng Next 16.4.3 (lỗ hổng), sửa hydration warning do extension.
-- **2026-10-31** – Nhánh `feature/ui-modules`: token ngữ nghĩa light/dark, i18n vi/en, bộ `components/ui`, màn khách hàng (home, phim, rạp, chọn ghế, tài khoản) + toàn bộ admin theo permission (phim, thể loại, rạp, phòng, sơ đồ ghế, loại ghế, suất chiếu, nhân sự, user, role). Seed dữ liệu test, test Chrome 4 role.

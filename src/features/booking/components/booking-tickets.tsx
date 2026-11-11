@@ -11,6 +11,8 @@ import { ROUTES } from "@/constants/routes";
 import { bookingApi } from "@/features/booking/api";
 import { BOOKING_STATUS_TONES } from "@/features/booking/components/my-bookings";
 import { PrintableTickets, TicketCard } from "@/features/booking/components/ticket-card";
+import { discountLines } from "@/features/booking/discount-lines";
+import { formatPoints } from "@/features/loyalty/rules";
 import { useApi } from "@/hooks/use-api";
 import { useLocale, useT } from "@/i18n";
 import { ApiError } from "@/lib/api-client";
@@ -100,16 +102,19 @@ export function BookingTickets({ bookingId }: { bookingId: number }) {
         </div>
       )}
 
-      {Number(data.discountAmount) > 0 && (
-        <p className="flex justify-between gap-4 text-sm font-medium text-success">
-          <span>{data.voucher ? t.promotion.discountLine(data.voucher.code) : t.booking.discount}</span>
-          <span>−{formatVnd(data.discountAmount, intlLocale)}</span>
+      {discountLines(data, t, intlLocale).map((line) => (
+        <p key={line.key} className="flex justify-between gap-4 text-sm font-medium text-success">
+          <span>{line.label}</span>
+          <span>−{formatVnd(line.amount, intlLocale)}</span>
         </p>
-      )}
+      ))}
       <div className="flex items-center justify-between border-t border-line pt-4">
         <span className="text-sm font-semibold text-fg-muted">{t.booking.totalToPay}</span>
         <span className="text-xl font-bold">{formatVnd(data.totalAmount, intlLocale)}</span>
       </div>
+      {data.pointsEarned > 0 && (
+        <p className="text-right text-sm font-semibold text-accent">{t.loyalty.earnLine(formatPoints(data.pointsEarned, intlLocale))}</p>
+      )}
       <Link href={ROUTES.myTickets} className={buttonClasses({ variant: "ghost", size: "md" })}>
         {t.account.tickets.backToList}
       </Link>

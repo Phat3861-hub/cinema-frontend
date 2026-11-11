@@ -68,7 +68,7 @@ export function VoucherBox({
             <p className="font-mono text-sm font-bold">{voucher.code}</p>
             <p className="truncate text-xs font-medium text-fg-muted">{voucher.name}</p>
           </div>
-          <span className="shrink-0 font-bold text-success tabular-nums">−{formatVnd(booking.discountAmount, intlLocale)}</span>
+          <span className="shrink-0 font-bold text-success tabular-nums">−{formatVnd(booking.voucherDiscount, intlLocale)}</span>
           <Button
             variant="ghost"
             size="sm"

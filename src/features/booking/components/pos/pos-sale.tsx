@@ -1,6 +1,6 @@
 "use client";
 
-import { Armchair, Banknote, ChevronDown, Minus, Plus, Popcorn, RotateCcw, TicketPercent, Trash2, UserRound, X } from "lucide-react";
+import { Armchair, Banknote, ChevronDown, Coins, Minus, Plus, Popcorn, RotateCcw, TicketPercent, Trash2, UserRound, X } from "lucide-react";
 import { useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { CoverImage } from "@/components/ui/cover-image";
@@ -12,6 +12,8 @@ import { cinemaBookingApi, productApi } from "@/features/booking/api";
 import { MAX_PRODUCT_QUANTITY } from "@/features/booking/components/food-step";
 import { PosCashDialog } from "@/features/booking/components/pos/pos-cash-dialog";
 import { PRODUCT_CATEGORIES, type Booking, type Product, type ProductCategory } from "@/features/booking/types";
+import { loyaltyApi } from "@/features/loyalty/api";
+import { formatPoints, maxPointsFor, POINT_VALUE } from "@/features/loyalty/rules";
 import { discountOf } from "@/features/promotion/discount";
 import { isVoucherError, voucherErrorMessage } from "@/features/promotion/errors";
 import type { VoucherQuote } from "@/features/promotion/types";
@@ -41,9 +43,10 @@ interface Customer {
 
 /**
  * POS steps 2–3 for one showtime: touch seat map (live over STOMP) and snack tiles on the left, the order on the
- * right (with an optional voucher), then cash payment. Mount it with `key={showtime.id}` so a new showtime starts a
- * new order. The voucher is checked once (no use taken) and its discount recomputed locally as the order changes;
- * the sale checks it again.
+ * right (with an optional voucher and the customer's loyalty points), then cash payment. Mount it with
+ * `key={showtime.id}` so a new showtime starts a new order. The voucher is checked once (no use taken) and its discount
+ * recomputed locally as the order changes; the sale checks it again. Points need the email of a customer account: its
+ * balance is checked once, the number used is capped locally as the order changes, and the sale checks again.
  */
 export function PosSale({
   cinemaId,
@@ -81,6 +84,10 @@ export function PosSale({
   const [voucherError, setVoucherError] = useState<string | null>(null);
   const [quote, setQuote] = useState<VoucherQuote | null>(null);
   const [checkingVoucher, setCheckingVoucher] = useState(false);
+  const [pointsAccount, setPointsAccount] = useState<{ email: string; fullName: string; balance: number } | null>(null);
+  const [pointsWanted, setPointsWanted] = useState("");
+  const [pointsError, setPointsError] = useState<string | null>(null);
+  const [checkingPoints, setCheckingPoints] = useState(false);
   const [cash, setCash] = useState<{ open: boolean; key: number }>({ open: false, key: 0 });
   const [selling, setSelling] = useState(false);
   const idempotencyKey = useRef("");
@@ -148,6 +155,29 @@ export function PosSale({
     setCustomerErrors({});
     setLimitHit(false);
     clearVoucher();
+    clearPoints();
+  }
+
+  function clearPoints() {
+    setPointsAccount(null);
+    setPointsWanted("");
+    setPointsError(null);
+  }
+
+  async function checkPoints() {
+    const email = customer.email.trim().toLowerCase();
+    setCheckingPoints(true);
+    setPointsError(null);
+    try {
+      const found = await loyaltyApi.quote(cinemaId, { customerEmail: email, subtotal, voucherDiscount: discount });
+      setPointsAccount({ email, fullName: found.fullName, balance: found.balance });
+      setPointsWanted("");
+    } catch (error) {
+      setPointsAccount(null);
+      setPointsError(errorCodeOf(error) === "LOYALTY_ACCOUNT_REQUIRED" ? t.loyalty.walkIn : getErrorMessage(error, t));
+    } finally {
+      setCheckingPoints(false);
+    }
   }
 
   function clearVoucher() {
@@ -211,6 +241,7 @@ export function PosSale({
           customerPhone: customer.phone.trim() || undefined,
           customerEmail: customer.email.trim() || undefined,
           voucherCode: quote?.voucher.code,
+          pointsToUse: pointsToUse || undefined,
         },
         idempotencyKey.current,
       );
@@ -218,7 +249,11 @@ export function PosSale({
     } catch (error) {
       setCash((c) => ({ ...c, open: false }));
       const code = errorCodeOf(error);
-      if (isVoucherError(error)) {
+      if (code?.startsWith("LOYALTY_")) {
+        // E.g. the customer spent the points online since the check: check again
+        toast.error(getErrorMessage(error, t));
+        clearPoints();
+      } else if (isVoucherError(error)) {
         // E.g. its last use went to another order since the check: sell without it or with another code
         toast.error(voucherErrorMessage(error, t, intlLocale));
         clearVoucher();
@@ -259,7 +294,13 @@ export function PosSale({
     : null;
   const belowMinimum = quote !== null && quoteDiscount === null;
   const discount = quoteDiscount ?? 0;
-  const total = subtotal - discount;
+  // The checked balance belongs to the email it was checked for
+  const linked = pointsAccount !== null && pointsAccount.email === customer.email.trim().toLowerCase() ? pointsAccount : null;
+  const pointsMax = linked ? Math.min(linked.balance, maxPointsFor(subtotal, discount)) : 0;
+  const pointsToUse = Math.min(Math.max(0, Math.floor(Number(pointsWanted) || 0)), pointsMax);
+  const pointsDiscount = pointsToUse * POINT_VALUE;
+  const total = subtotal - discount - pointsDiscount;
+  const canCheckPoints = EMAIL_PATTERN.test(customer.email.trim());
   const itemCount = lines.reduce((sum, line) => sum + line.quantity, 0);
   const visibleProducts = (products.data ?? []).filter((p) => category === "ALL" || p.category === category);
   const categories = PRODUCT_CATEGORIES.filter((c) => (products.data ?? []).some((p) => p.category === c));
@@ -528,6 +569,63 @@ export function PosSale({
           )}
         </div>
 
+        <div className="flex flex-col gap-2 border-t border-line pt-3">
+          <p className="flex items-center gap-2 text-sm font-semibold text-fg-2">
+            <Coins aria-hidden className="size-4" />
+            {t.loyalty.usePoints}
+          </p>
+          {linked ? (
+            <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface-2 p-3">
+              <div className="flex items-center gap-2">
+                <p className="min-w-0 flex-1 truncate text-sm font-semibold">
+                  {t.loyalty.customerPoints(linked.fullName, formatPoints(linked.balance, intlLocale))}
+                </p>
+                <QtyButton label={t.loyalty.remove} onClick={clearPoints} disabled={selling}>
+                  <X aria-hidden className="size-4" />
+                </QtyButton>
+              </div>
+              {pointsMax > 0 ? (
+                <>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={pointsMax}
+                      step={1}
+                      value={pointsWanted}
+                      onChange={(event) => setPointsWanted(event.target.value)}
+                      placeholder="0"
+                      aria-label={t.loyalty.pointsInput}
+                      disabled={selling}
+                      className={`${controlClasses()} min-w-0 flex-1 tabular-nums`}
+                    />
+                    <Button variant="outline" className="shrink-0" disabled={selling} onClick={() => setPointsWanted(String(pointsMax))}>
+                      {t.loyalty.useMax}
+                    </Button>
+                  </div>
+                  <p className="text-xs font-medium text-fg-muted">{t.loyalty.maxForOrder(formatPoints(pointsMax, intlLocale))}</p>
+                </>
+              ) : (
+                <p className="text-xs font-medium text-fg-muted">{linked.balance === 0 ? t.loyalty.customerNoPoints : t.loyalty.notUsable}</p>
+              )}
+            </div>
+          ) : (
+            <>
+              <Button variant="outline" disabled={!canCheckPoints || chosen.length === 0 || selling} loading={checkingPoints} onClick={checkPoints}>
+                {t.loyalty.check}
+              </Button>
+              {pointsError ? (
+                <p role="alert" className="text-xs font-semibold text-danger">
+                  {pointsError}
+                </p>
+              ) : (
+                !canCheckPoints && <p className="text-xs font-medium text-fg-muted">{t.loyalty.needEmail}</p>
+              )}
+            </>
+          )}
+        </div>
+
         <dl className="flex flex-col gap-1.5 border-t border-line pt-3 text-sm font-semibold">
           <div className="flex justify-between text-fg-muted">
             <dt>{t.booking.seats}</dt>
@@ -541,6 +639,12 @@ export function PosSale({
             <div className="flex justify-between text-success">
               <dt>{t.promotion.discountLine(quote.voucher.code)}</dt>
               <dd className="tabular-nums">−{formatVnd(discount, intlLocale)}</dd>
+            </div>
+          )}
+          {pointsToUse > 0 && (
+            <div className="flex justify-between text-success">
+              <dt>{t.loyalty.usedLine(formatPoints(pointsToUse, intlLocale))}</dt>
+              <dd className="tabular-nums">−{formatVnd(pointsDiscount, intlLocale)}</dd>
             </div>
           )}
           <div className="mt-1 flex items-baseline justify-between">

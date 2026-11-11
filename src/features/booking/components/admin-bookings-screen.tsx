@@ -16,6 +16,8 @@ import { useAdminCinema } from "@/features/admin/cinema-context";
 import { cinemaBookingApi } from "@/features/booking/api";
 import { BOOKING_STATUS_TONES } from "@/features/booking/components/my-bookings";
 import { PrintableTickets, TICKET_TONES } from "@/features/booking/components/ticket-card";
+import { discountLines } from "@/features/booking/discount-lines";
+import { formatPoints } from "@/features/loyalty/rules";
 import {
   BOOKING_CHANNELS,
   BOOKING_STATUSES,
@@ -410,17 +412,20 @@ export function BookingDetailDialog({ booking, onClose }: { booking: Booking | n
             </div>
           )}
 
-          {Number(booking.discountAmount) > 0 && (
-            <p className="flex justify-between gap-4 font-medium text-success">
-              <span>{booking.voucher ? t.promotion.discountLine(booking.voucher.code) : t.booking.discount}</span>
-              <span className="tabular-nums">−{formatVnd(booking.discountAmount, intlLocale)}</span>
+          {discountLines(booking, t, intlLocale).map((line) => (
+            <p key={line.key} className="flex justify-between gap-4 font-medium text-success">
+              <span>{line.label}</span>
+              <span className="tabular-nums">−{formatVnd(line.amount, intlLocale)}</span>
             </p>
-          )}
+          ))}
 
           <div className="flex items-center justify-between border-t border-line pt-3">
             <span className="font-semibold text-fg-muted">{t.booking.totalToPay}</span>
             <span className="text-xl font-bold tabular-nums">{formatVnd(booking.totalAmount, intlLocale)}</span>
           </div>
+          {booking.pointsEarned > 0 && (
+            <p className="text-right font-semibold text-accent">{t.loyalty.earnLine(formatPoints(booking.pointsEarned, intlLocale))}</p>
+          )}
 
           {booking.tickets.length > 0 && (
             <PrintPortal>
