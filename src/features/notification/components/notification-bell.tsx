@@ -10,6 +10,7 @@ import { ROUTES } from "@/constants/routes";
 import { useSession } from "@/features/auth/components/session-provider";
 import { notificationApi } from "@/features/notification/api";
 import { NotificationItem } from "@/features/notification/components/notification-item";
+import { useNotificationStream } from "@/features/notification/hooks/use-notification-stream";
 import { announceNotificationsChanged, useUnreadCount } from "@/features/notification/hooks/use-unread-count";
 import { useApi } from "@/hooks/use-api";
 import { useNow } from "@/hooks/use-now";
@@ -41,6 +42,8 @@ export function NotificationBell() {
   const now = useNow();
   const { user } = useSession();
   const count = useUnreadCount(Boolean(user));
+  // The bell is on every signed-in page exactly once, so it owns the live connection.
+  useNotificationStream(user?.id ?? null);
   const [position, setPosition] = useState<ReturnType<typeof panelPosition> | null>(null);
   const open = position !== null;
   const [marking, setMarking] = useState(false);

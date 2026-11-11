@@ -9,6 +9,7 @@ import { Tabs } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/toast";
 import { notificationApi } from "@/features/notification/api";
 import { NotificationItem } from "@/features/notification/components/notification-item";
+import { NotificationSettings } from "@/features/notification/components/notification-settings";
 import {
   announceNotificationsChanged,
   useNotificationsChanged,
@@ -23,7 +24,10 @@ type Tab = "all" | "unread";
 
 const PAGE_SIZE = 10;
 
-/** `/notifications` (SYS-02): every notification of the signed-in user, tabs All / Unread, newest first, paged. */
+/**
+ * `/notifications` (SYS-02): every notification of the signed-in user, tabs All / Unread, newest first, paged, and
+ * below it the notification settings.
+ */
 export function MyNotifications() {
   const t = useT();
   const toast = useToast();
@@ -56,48 +60,54 @@ export function MyNotifications() {
   const data = list.data;
 
   return (
-    <section className="flex flex-col gap-5 rounded-2xl border border-line bg-surface p-6" aria-labelledby="notifications-title">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 id="notifications-title" className="text-h6">
-          {t.notifications.title}
-        </h1>
-        <Button variant="outline" size="md" onClick={markAllRead} loading={marking} disabled={unread === 0}>
-          <CheckCheck aria-hidden className="size-4" />
-          {t.notifications.markAllRead}
-        </Button>
-      </div>
-      <Tabs
-        label={t.notifications.tabs}
-        value={tab}
-        onChange={(value) => {
-          setTab(value);
-          setPage(0);
-        }}
-        items={[
-          { value: "all", label: t.notifications.tabAll },
-          { value: "unread", label: t.notifications.tabUnread, count: unread || undefined },
-        ]}
-      />
-      {list.error !== undefined && !data ? (
-        <ErrorState error={list.error} onRetry={list.reload} />
-      ) : !data ? (
-        <LoadingState />
-      ) : data.content.length === 0 ? (
-        <EmptyState
-          icon={Bell}
-          title={tab === "unread" ? t.notifications.emptyUnread : t.notifications.empty}
-          description={t.notifications.emptyHint}
+    <div className="flex flex-col gap-6">
+      <section
+        className="flex flex-col gap-5 rounded-2xl border border-line bg-surface p-6"
+        aria-labelledby="notifications-title"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 id="notifications-title" className="text-h6">
+            {t.notifications.title}
+          </h1>
+          <Button variant="outline" size="md" onClick={markAllRead} loading={marking} disabled={unread === 0}>
+            <CheckCheck aria-hidden className="size-4" />
+            {t.notifications.markAllRead}
+          </Button>
+        </div>
+        <Tabs
+          label={t.notifications.tabs}
+          value={tab}
+          onChange={(value) => {
+            setTab(value);
+            setPage(0);
+          }}
+          items={[
+            { value: "all", label: t.notifications.tabAll },
+            { value: "unread", label: t.notifications.tabUnread, count: unread || undefined },
+          ]}
         />
-      ) : (
-        <ul className={`flex flex-col gap-1 transition-opacity ${list.loading ? "opacity-60" : ""}`}>
-          {data.content.map((notification) => (
-            <li key={notification.id}>
-              <NotificationItem notification={notification} now={now} />
-            </li>
-          ))}
-        </ul>
-      )}
-      {data && <Pagination page={page} totalPages={data.totalPages} onChange={setPage} />}
-    </section>
+        {list.error !== undefined && !data ? (
+          <ErrorState error={list.error} onRetry={list.reload} />
+        ) : !data ? (
+          <LoadingState />
+        ) : data.content.length === 0 ? (
+          <EmptyState
+            icon={Bell}
+            title={tab === "unread" ? t.notifications.emptyUnread : t.notifications.empty}
+            description={t.notifications.emptyHint}
+          />
+        ) : (
+          <ul className={`flex flex-col gap-1 transition-opacity ${list.loading ? "opacity-60" : ""}`}>
+            {data.content.map((notification) => (
+              <li key={notification.id}>
+                <NotificationItem notification={notification} now={now} />
+              </li>
+            ))}
+          </ul>
+        )}
+        {data && <Pagination page={page} totalPages={data.totalPages} onChange={setPage} />}
+      </section>
+      <NotificationSettings />
+    </div>
   );
 }

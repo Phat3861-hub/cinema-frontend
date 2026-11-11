@@ -21,7 +21,8 @@ export function notificationText(n: AppNotification, t: Messages, intlLocale: st
     place: `${d.cinemaName}, ${d.roomName}`,
     seats: d.seats.join(", "),
   };
-  return { title: texts[n.type].title, body: texts[n.type].body(booking) };
+  const earned = n.type === "BOOKING_CONFIRMED" && d.pointsEarned ? ` ${t.notifications.pointsEarned(d.pointsEarned)}` : "";
+  return { title: texts[n.type].title, body: texts[n.type].body(booking) + earned };
 }
 
 /** Where a click on the notification leads. */
