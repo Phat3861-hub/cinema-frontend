@@ -28,6 +28,19 @@ export interface MovieSummary {
   genres: Genre[];
 }
 
+/** MovieImageResponse – a gallery still, in display order. */
+export interface MovieImage {
+  url: string;
+  caption: string | null;
+}
+
+/** CastMemberResponse – an actor, in display order. */
+export interface CastMember {
+  name: string;
+  character: string | null;
+  photoUrl: string | null;
+}
+
 /** MovieResponse – detail. */
 export interface Movie extends MovieSummary {
   description: string | null;
@@ -36,6 +49,9 @@ export interface Movie extends MovieSummary {
   director: string | null;
   castMembers: string | null;
   trailerUrl: string | null;
+  images: MovieImage[];
+  /** Structured cast; while not empty, castMembers is the actors' names. */
+  cast: CastMember[];
   createdAt: string;
   updatedAt: string;
 }
@@ -54,6 +70,10 @@ export interface MovieRequest {
   posterUrl?: string;
   trailerUrl?: string;
   genreIds: number[];
+  /** Replaces the gallery (omit to keep it). */
+  images?: { url: string; caption?: string }[];
+  /** Replaces the cast (omit to keep it); a non-empty cast overrides castMembers. */
+  cast?: { name: string; character?: string; photoUrl?: string }[];
 }
 
 export interface MovieFilter {

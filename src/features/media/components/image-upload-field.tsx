@@ -17,6 +17,7 @@ import { getErrorMessage } from "@/lib/error-messages";
 const PERMISSION: Record<ImagePurpose, string> = {
   BANNER: "BANNER_MANAGE",
   MOVIE_POSTER: "MOVIE_MANAGE",
+  MOVIE_IMAGE: "MOVIE_MANAGE",
   PRODUCT: "PRODUCT_MANAGE",
   CINEMA: "CINEMA_MANAGE",
 };

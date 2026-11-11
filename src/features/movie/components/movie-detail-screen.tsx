@@ -8,6 +8,7 @@ import { ErrorState, Skeleton } from "@/components/ui/states";
 import { movieApi } from "@/features/movie/api";
 import { FavoriteButton } from "@/features/movie/components/favorite-button";
 import { AgeBadge, MovieStatusBadge, Rating } from "@/features/movie/components/movie-badges";
+import { MovieCast, MovieGallery } from "@/features/movie/components/movie-media";
 import { MovieReviews } from "@/features/movie/components/movie-reviews";
 import { genreLabel, splitCast, youtubeEmbedUrl } from "@/features/movie/labels";
 import type { Movie } from "@/features/movie/types";
@@ -18,7 +19,10 @@ import { ApiError } from "@/lib/api-client";
 import { formatDate } from "@/lib/format";
 import { notFound } from "next/navigation";
 
-/** Ticketor Movie Details: poster + trailer hero, synopsis, crew, cast chips, showtimes by cinema, then reviews. */
+/**
+ * Ticketor Movie Details: poster + trailer hero (synopsis, crew), the cast with photos, showtimes by cinema, the gallery,
+ * then reviews. Movies without a structured cast show the `castMembers` names as chips in the hero.
+ */
 export function MovieDetailScreen({ slug }: { slug: string }) {
   const { data: movie, error, loading, reload, setData } = useApi(`movie:${slug}`, () => movieApi.bySlug(slug));
 
@@ -29,9 +33,11 @@ export function MovieDetailScreen({ slug }: { slug: string }) {
   return (
     <div className="flex flex-col gap-12 pb-8">
       <Hero movie={movie} />
+      <MovieCast cast={movie.cast} />
       <section id="showtimes" className="mx-auto w-full max-w-[1232px] scroll-mt-24 px-4">
         <MovieShowtimes movie={movie} />
       </section>
+      <MovieGallery images={movie.images} title={movie.title} />
       <MovieReviews
         movie={movie}
         onRatingChange={(summary) =>
@@ -47,7 +53,7 @@ function Hero({ movie }: { movie: Movie }) {
   const { intlLocale } = useLocale();
   const [playing, setPlaying] = useState(false);
   const embed = youtubeEmbedUrl(movie.trailerUrl);
-  const cast = splitCast(movie.castMembers);
+  const cast = movie.cast.length > 0 ? [] : splitCast(movie.castMembers);
 
   const facts = [
     { icon: Clock, label: t.movie.duration, value: t.common.duration(movie.durationMinutes) },

@@ -17,6 +17,15 @@ import { ROUTES } from "@/constants/routes";
 import { adminChecks, anyError, backendFieldErrors, optional, type Errors } from "@/features/admin/form-utils";
 import { ImageUploadField } from "@/features/media/components/image-upload-field";
 import { genreApi, movieApi } from "@/features/movie/api";
+import {
+  CastEditor,
+  GalleryEditor,
+  toCastRows,
+  toImageRows,
+  toMediaRequest,
+  validateMedia,
+  type MediaErrors,
+} from "@/features/movie/components/admin-movie-media";
 import { MovieStatusBadge } from "@/features/movie/components/movie-badges";
 import { genreLabel } from "@/features/movie/labels";
 import { AGE_RATINGS, type AgeRating, type Movie, type MovieRequest } from "@/features/movie/types";
@@ -34,7 +43,6 @@ type Field =
   | "language"
   | "country"
   | "director"
-  | "castMembers"
   | "posterUrl"
   | "trailerUrl";
 
@@ -51,7 +59,6 @@ function toValues(movie?: Movie): Values {
     language: movie?.language ?? "",
     country: movie?.country ?? "",
     director: movie?.director ?? "",
-    castMembers: movie?.castMembers ?? "",
     posterUrl: movie?.posterUrl ?? "",
     trailerUrl: movie?.trailerUrl ?? "",
   };
@@ -65,7 +72,7 @@ export function AdminMovieEditor({ movieId }: { movieId?: string }) {
   return <MovieForm movie={movie.data} />;
 }
 
-/** BankDash Setting form, 2 columns: poster preview on the left, fields on the right. */
+/** BankDash Setting form, 2 columns: poster preview on the left; fields, cast and gallery on the right. */
 function MovieForm({ movie }: { movie?: Movie }) {
   const t = useT();
   const toast = useToast();
@@ -74,7 +81,10 @@ function MovieForm({ movie }: { movie?: Movie }) {
   const genres = useApi("genres", genreApi.list);
   const [values, setValues] = useState<Values>(() => toValues(movie));
   const [genreIds, setGenreIds] = useState<number[]>(movie?.genres.map((g) => g.id) ?? []);
+  const [images, setImages] = useState(() => toImageRows(movie));
+  const [cast, setCast] = useState(() => toCastRows(movie));
   const [errors, setErrors] = useState<Errors<Field | "genreIds">>({});
+  const [mediaErrors, setMediaErrors] = useState<MediaErrors>({});
   const [formError, setFormError] = useState<unknown>(null);
   const [saving, setSaving] = useState(false);
 
@@ -93,19 +103,21 @@ function MovieForm({ movie }: { movie?: Movie }) {
       language: check.maxLength(values.language, 50),
       country: check.maxLength(values.country, 50),
       director: check.maxLength(values.director, 255),
-      castMembers: check.maxLength(values.castMembers, 2000),
       posterUrl: check.url(values.posterUrl),
       trailerUrl: check.url(values.trailerUrl),
-      genreIds: genreIds.length === 0 ? t.admin.movies.genresRequired : genreIds.length > 10 ? t.admin.movies.genresMax : undefined,
+      genreIds:
+        genreIds.length === 0 ? t.admin.movies.genresRequired : genreIds.length > 10 ? t.admin.movies.genresMax : undefined,
     };
   }
 
   async function submit(event: FormEvent) {
     event.preventDefault();
     const found = validate();
+    const foundMedia = validateMedia(images, cast, t);
     setErrors(found);
+    setMediaErrors(foundMedia);
     setFormError(null);
-    if (anyError(found)) return;
+    if (anyError(found) || anyError(foundMedia)) return;
 
     const body: MovieRequest = {
       title: values.title.trim(),
@@ -117,10 +129,10 @@ function MovieForm({ movie }: { movie?: Movie }) {
       language: optional(values.language),
       country: optional(values.country),
       director: optional(values.director),
-      castMembers: optional(values.castMembers),
       posterUrl: optional(values.posterUrl),
       trailerUrl: optional(values.trailerUrl),
       genreIds,
+      ...toMediaRequest(images, cast),
     };
     setSaving(true);
     try {
@@ -173,113 +185,127 @@ function MovieForm({ movie }: { movie?: Movie }) {
           )}
         </Card>
 
-        <Card className="grid gap-5 p-5 sm:p-6 md:grid-cols-2">
-          <div className="md:col-span-2">
-            <TextField label={t.admin.movies.titleField} required value={values.title} onChange={set("title")} error={errors.title} />
-          </div>
-          <div className="md:col-span-2">
-            <TextareaField
-              label={t.movie.synopsis}
-              optional
-              rows={5}
-              value={values.description}
-              onChange={set("description")}
-              error={errors.description}
-            />
-          </div>
-          <TextField
-            label={t.admin.movies.durationField}
-            required
-            type="number"
-            min={1}
-            max={600}
-            inputMode="numeric"
-            value={values.durationMinutes}
-            onChange={set("durationMinutes")}
-            error={errors.durationMinutes}
-          />
-          <SelectField label={t.movie.ageRating} required value={values.ageRating} onChange={set("ageRating")}>
-            {AGE_RATINGS.map((rating) => (
-              <option key={rating} value={rating}>
-                {rating} – {t.movie.ageHint[rating]}
-              </option>
-            ))}
-          </SelectField>
-          <TextField
-            label={t.movie.releaseDate}
-            required
-            type="date"
-            value={values.releaseDate}
-            onChange={set("releaseDate")}
-            error={errors.releaseDate}
-          />
-          <TextField
-            label={t.admin.movies.endDate}
-            optional
-            type="date"
-            value={values.endDate}
-            min={values.releaseDate || undefined}
-            onChange={set("endDate")}
-            error={errors.endDate}
-            hint={t.admin.movies.statusHint}
-          />
-          <TextField label={t.movie.language} optional value={values.language} onChange={set("language")} error={errors.language} />
-          <TextField label={t.movie.country} optional value={values.country} onChange={set("country")} error={errors.country} />
-          <TextField label={t.movie.director} optional value={values.director} onChange={set("director")} error={errors.director} />
-          <TextField
-            label={t.admin.movies.trailerUrl}
-            optional
-            type="url"
-            placeholder="https://www.youtube.com/watch?v=…"
-            value={values.trailerUrl}
-            onChange={set("trailerUrl")}
-            error={errors.trailerUrl}
-          />
-          <div className="md:col-span-2">
-            <TextareaField
-              label={t.movie.cast}
-              optional
-              rows={2}
-              hint={t.admin.movies.castHint}
-              value={values.castMembers}
-              onChange={set("castMembers")}
-              error={errors.castMembers}
-            />
-          </div>
-          <fieldset className="flex flex-col gap-3 md:col-span-2" aria-describedby={errors.genreIds ? "genre-error" : undefined}>
-            <legend className="mb-2 text-sm font-medium">
-              {t.movie.genre}
-              <span aria-hidden className="text-danger">
-                {" "}
-                *
-              </span>
-            </legend>
-            <div className="flex flex-wrap gap-2">
-              {genres.data?.map((genre) => {
-                const on = genreIds.includes(genre.id);
-                return (
-                  <button
-                    key={genre.id}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() => setGenreIds((ids) => (on ? ids.filter((id) => id !== genre.id) : [...ids, genre.id]))}
-                    className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-accent ${
-                      on ? "border-primary bg-primary text-black" : "border-line-strong text-fg-2 hover:border-fg-subtle"
-                    }`}
-                  >
-                    {on && <Check aria-hidden className="size-3.5" />}
-                    {genreLabel(genre, t)}
-                  </button>
-                );
-              })}
+        <div className="flex min-w-0 flex-col gap-6">
+          <Card className="grid gap-5 p-5 sm:p-6 md:grid-cols-2">
+            <div className="md:col-span-2">
+              <TextField
+                label={t.admin.movies.titleField}
+                required
+                value={values.title}
+                onChange={set("title")}
+                error={errors.title}
+              />
             </div>
-            {errors.genreIds && (
-              <p id="genre-error" className="text-xs font-medium text-danger">
-                {errors.genreIds}
-              </p>
-            )}
-          </fieldset>
-        </Card>
+            <div className="md:col-span-2">
+              <TextareaField
+                label={t.movie.synopsis}
+                optional
+                rows={5}
+                value={values.description}
+                onChange={set("description")}
+                error={errors.description}
+              />
+            </div>
+            <TextField
+              label={t.admin.movies.durationField}
+              required
+              type="number"
+              min={1}
+              max={600}
+              inputMode="numeric"
+              value={values.durationMinutes}
+              onChange={set("durationMinutes")}
+              error={errors.durationMinutes}
+            />
+            <SelectField label={t.movie.ageRating} required value={values.ageRating} onChange={set("ageRating")}>
+              {AGE_RATINGS.map((rating) => (
+                <option key={rating} value={rating}>
+                  {rating} – {t.movie.ageHint[rating]}
+                </option>
+              ))}
+            </SelectField>
+            <TextField
+              label={t.movie.releaseDate}
+              required
+              type="date"
+              value={values.releaseDate}
+              onChange={set("releaseDate")}
+              error={errors.releaseDate}
+            />
+            <TextField
+              label={t.admin.movies.endDate}
+              optional
+              type="date"
+              value={values.endDate}
+              min={values.releaseDate || undefined}
+              onChange={set("endDate")}
+              error={errors.endDate}
+              hint={t.admin.movies.statusHint}
+            />
+            <TextField
+              label={t.movie.language}
+              optional
+              value={values.language}
+              onChange={set("language")}
+              error={errors.language}
+            />
+            <TextField label={t.movie.country} optional value={values.country} onChange={set("country")} error={errors.country} />
+            <TextField
+              label={t.movie.director}
+              optional
+              value={values.director}
+              onChange={set("director")}
+              error={errors.director}
+            />
+            <TextField
+              label={t.admin.movies.trailerUrl}
+              optional
+              type="url"
+              placeholder="https://www.youtube.com/watch?v=…"
+              value={values.trailerUrl}
+              onChange={set("trailerUrl")}
+              error={errors.trailerUrl}
+            />
+            <fieldset
+              className="flex flex-col gap-3 md:col-span-2"
+              aria-describedby={errors.genreIds ? "genre-error" : undefined}
+            >
+              <legend className="mb-2 text-sm font-medium">
+                {t.movie.genre}
+                <span aria-hidden className="text-danger">
+                  {" "}
+                  *
+                </span>
+              </legend>
+              <div className="flex flex-wrap gap-2">
+                {genres.data?.map((genre) => {
+                  const on = genreIds.includes(genre.id);
+                  return (
+                    <button
+                      key={genre.id}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => setGenreIds((ids) => (on ? ids.filter((id) => id !== genre.id) : [...ids, genre.id]))}
+                      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-accent ${
+                        on ? "border-primary bg-primary text-black" : "border-line-strong text-fg-2 hover:border-fg-subtle"
+                      }`}
+                    >
+                      {on && <Check aria-hidden className="size-3.5" />}
+                      {genreLabel(genre, t)}
+                    </button>
+                  );
+                })}
+              </div>
+              {errors.genreIds && (
+                <p id="genre-error" className="text-xs font-medium text-danger">
+                  {errors.genreIds}
+                </p>
+              )}
+            </fieldset>
+          </Card>
+          <CastEditor rows={cast} onChange={setCast} errors={mediaErrors} />
+          <GalleryEditor rows={images} onChange={setImages} errors={mediaErrors} />
+        </div>
       </div>
     </form>
   );
